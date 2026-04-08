@@ -7,7 +7,11 @@ import me.sergidalmau.cheflink.server.ChefLinkServer
 fun main() = application {
     Window(
         onCloseRequest = {
-            ChefLinkServer.stop() // Aturem el servidor sempre per si de cas
+            try {
+                ChefLinkServer.stop()
+            } catch (e: Throwable) {
+                println("Error en aturar el servidor: ${e.message}")
+            }
             exitApplication()
         },
         title = "ChefLink - Cuina i Control"

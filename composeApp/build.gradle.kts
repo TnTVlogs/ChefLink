@@ -6,7 +6,7 @@ plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
-    // alias(libs.plugins.composeHotReload)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 kotlin {
@@ -53,7 +53,7 @@ kotlin {
         }
         val desktopMain by getting {
             dependencies {
-                implementation(projects.server)
+                api(projects.server)
                 implementation(libs.kotlinx.coroutinesSwing)
                 implementation(compose.desktop.currentOs)
             }
@@ -104,7 +104,7 @@ compose.desktop {
         mainClass = "me.sergidalmau.cheflink.MainKt"
 
         nativeDistributions {
-            targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
+            targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Exe, TargetFormat.Deb)
             packageName = "me.sergidalmau.cheflink"
             packageVersion = "1.0.0"
         }

@@ -1,5 +1,6 @@
 package me.sergidalmau.cheflink.ui.theme
 
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.material3.darkColorScheme
@@ -96,10 +97,10 @@ fun AppTheme(
     MaterialTheme(
         colorScheme = colorScheme,
         shapes = MaterialTheme.shapes.copy(
-            small = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
-            medium = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
-            large = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
-            extraLarge = androidx.compose.foundation.shape.RoundedCornerShape(32.dp)
+            small = RoundedCornerShape(12.dp),
+            medium = RoundedCornerShape(16.dp),
+            large = RoundedCornerShape(24.dp),
+            extraLarge = RoundedCornerShape(32.dp)
         ),
         typography = MaterialTheme.typography.copy(
             bodyLarge = MaterialTheme.typography.bodyLarge.copy(fontSize = TextUnit.Unspecified), // keeping default

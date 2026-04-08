@@ -8,7 +8,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import me.sergidalmau.cheflink.domain.models.Table
-import me.sergidalmau.cheflink.domain.models.User
 import me.sergidalmau.cheflink.domain.repository.TableRepository
 import me.sergidalmau.cheflink.domain.repository.UserRepository
 import me.sergidalmau.cheflink.domain.repository.OrderRepository
@@ -23,6 +22,7 @@ import me.sergidalmau.cheflink.domain.models.Product
 import me.sergidalmau.cheflink.domain.models.ProductCategory
 import me.sergidalmau.cheflink.domain.models.UserRole
 import me.sergidalmau.cheflink.domain.repository.ProductRepository
+import me.sergidalmau.cheflink.ui.util.AppSession
 import me.sergidalmau.cheflink.ui.util.ComponentSize
 import me.sergidalmau.cheflink.ui.util.Language
 import kotlin.time.Duration.Companion.milliseconds
@@ -51,8 +51,7 @@ class MainViewModel(
     val isServerEnabled = _isServerEnabled.asStateFlow()
 
     private var updateObservationJob: Job? = null
-    private val _user = MutableStateFlow<User?>(null)
-    val user = _user.asStateFlow()
+    val user = AppSession.currentUser
 
     private val _tables = MutableStateFlow<List<Table>>(emptyList())
     val tables = _tables.asStateFlow()
@@ -112,25 +111,41 @@ class MainViewModel(
         viewModelScope.launch {
             try {
                 _products.value = productRepository.getProducts()
-            } catch (_: Exception) {}
+            } catch (_: Exception) {
+            }
         }
     }
 
-    fun createProduct(name: String, category: ProductCategory, price: Double, description: String?, isAvailable: Boolean = true) {
+    fun createProduct(
+        name: String,
+        category: ProductCategory,
+        price: Double,
+        description: String?,
+        isAvailable: Boolean = true
+    ) {
         viewModelScope.launch {
             try {
                 productRepository.createProduct(name, category, price, description, isAvailable)
                 loadProducts()
-            } catch (_: Exception) {}
+            } catch (_: Exception) {
+            }
         }
     }
 
-    fun updateProduct(id: String, name: String, category: ProductCategory, price: Double, description: String?, isAvailable: Boolean) {
+    fun updateProduct(
+        id: String,
+        name: String,
+        category: ProductCategory,
+        price: Double,
+        description: String?,
+        isAvailable: Boolean
+    ) {
         viewModelScope.launch {
             try {
                 productRepository.updateProduct(id, name, category, price, description, isAvailable)
                 loadProducts()
-            } catch (_: Exception) {}
+            } catch (_: Exception) {
+            }
         }
     }
 
@@ -139,7 +154,8 @@ class MainViewModel(
             try {
                 productRepository.deleteProduct(id)
                 loadProducts()
-            } catch (_: Exception) {}
+            } catch (_: Exception) {
+            }
         }
     }
 
@@ -147,10 +163,10 @@ class MainViewModel(
         viewModelScope.launch {
             _isCheckingHealth.value = true
             _healthErrorMessage.value = null
-            
+
             var healthy = false
             var lastError: String? = null
-            
+
             for (i in 1..retryCount) {
                 try {
                     healthy = orderRepository.checkHealth()
@@ -160,10 +176,10 @@ class MainViewModel(
                 }
                 delay(1000.milliseconds)
             }
-            
+
             _isApiHealthy.value = healthy
             _isCheckingHealth.value = false
-            
+
             if (healthy) {
                 _healthErrorMessage.value = null
                 loadTables()
@@ -185,7 +201,7 @@ class MainViewModel(
             _loginError.value = null
             val loggedInUser = userRepository.login(username, password)
             if (loggedInUser != null) {
-                _user.value = loggedInUser
+                AppSession.loginUser(loggedInUser)
             } else {
                 _loginError.value = "Credencials invàlides. Torna-ho a provar."
             }
@@ -196,11 +212,11 @@ class MainViewModel(
     val registrationSuccess = _registrationSuccess.asStateFlow()
 
     fun register(
-        username: String, 
-        password: String, 
-        firstName: String, 
-        lastName: String, 
-        email: String, 
+        username: String,
+        password: String,
+        firstName: String,
+        lastName: String,
+        email: String,
         role: UserRole
     ) {
         viewModelScope.launch {
@@ -229,12 +245,12 @@ class MainViewModel(
     }
 
     fun logout() {
-        _user.value = null
+        AppSession.logout()
         _loginError.value = null
     }
 
     fun changePassword(oldPass: String, newPass: String) {
-        val currentUser = _user.value ?: return
+        val currentUser = AppSession.currentUser.value ?: return
         viewModelScope.launch {
             try {
                 val success = userRepository.changePassword(currentUser.id, oldPass, newPass)
@@ -276,16 +292,16 @@ class MainViewModel(
 
     fun setServerUrl(url: String) {
         if (url == settingsRepository.serverUrl) return
-        
+
         settingsRepository.serverUrl = url
         _serverUrl.value = url
-        
+
         // Re-initialize repositories
         tableRepository = RemoteTableRepository(url)
         userRepository = RemoteUserRepository(url)
         orderRepository = RemoteOrderRepository(url)
         productRepository = RemoteProductRepository(url)
-        
+
         // Restart everything
         checkApiHealth()
         startObservingUpdates()
@@ -297,15 +313,38 @@ class MainViewModel(
     fun discoverServer() {
         viewModelScope.launch {
             _isDiscovering.value = true
-            _registrationMessage.value = "Buscant servidor a la xarxa local..."
-            val discoveredUrl = DiscoveryClient().discover()
-            if (discoveredUrl != null) {
-                setServerUrl(discoveredUrl)
-                _isApiHealthy.value = true // Forçem a true per anar directe al login
+            _registrationMessage.value = "Provant connexió al núvol..."
+
+            // Guardem l'antiga per si falla local
+            val oldUrl = _serverUrl.value
+
+            // 1. Provar directament el domini principal
+            val cloudUrl = "https://cheflink.sergidalmau.dev"
+            setServerUrl(cloudUrl)
+
+            var isCloudHealthy = false
+            try {
+                isCloudHealthy = orderRepository.checkHealth()
+            } catch (_: Exception) {
+            }
+
+            if (isCloudHealthy) {
+                _isApiHealthy.value = true
                 _healthErrorMessage.value = null
-                _registrationMessage.value = "Servidor trobat i connectat!"
+                _registrationMessage.value = "Connectat al núvol satisfactòriament!"
             } else {
-                _registrationMessage.value = "No s'ha trobat cap servidor. Revisa que estiguis al mateix Wi-Fi."
+                // 2. Si falla el núvol, busquem a la xarxa local
+                setServerUrl(oldUrl)
+                _registrationMessage.value = "Buscant servidor a la xarxa local..."
+                val discoveredUrl = DiscoveryClient().discover()
+                if (discoveredUrl != null) {
+                    setServerUrl(discoveredUrl)
+                    _isApiHealthy.value = true
+                    _healthErrorMessage.value = null
+                    _registrationMessage.value = "Servidor local trobat i connectat!"
+                } else {
+                    _registrationMessage.value = "No s'ha trobat cap servidor al núvol ni a la xarxa local."
+                }
             }
             _isDiscovering.value = false
         }
@@ -355,9 +394,10 @@ class MainViewModel(
         viewModelScope.launch {
             _isServerStarting.value = true
             _serverStartError.value = null
-            
-            val result = serverManager?.startServer() ?: Result.failure(Exception("Server not supported on this platform"))
-            
+
+            val result =
+                serverManager?.startServer() ?: Result.failure(Exception("Server not supported on this platform"))
+
             if (result.isSuccess) {
                 setServerUrl("http://localhost:8080")
                 _isModeSelected.value = true

@@ -2,6 +2,7 @@ package me.sergidalmau.cheflink.data.local
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import me.sergidalmau.cheflink.domain.models.MockData
 import org.jetbrains.exposed.v1.jdbc.Database
 import org.jetbrains.exposed.v1.jdbc.SchemaUtils
 import org.jetbrains.exposed.v1.jdbc.transactions.suspendTransaction
@@ -36,11 +37,17 @@ object DatabaseFactory {
 
         transaction(database) {
             SchemaUtils.create(OrdersTable, OrderItemsTable, UsersTable, TablesTable, ProductsTable)
-            
-            MigrationUtils.statementsRequiredForDatabaseMigration(OrdersTable, OrderItemsTable, UsersTable, TablesTable, ProductsTable).forEach { statement ->
+
+            MigrationUtils.statementsRequiredForDatabaseMigration(
+                OrdersTable,
+                OrderItemsTable,
+                UsersTable,
+                TablesTable,
+                ProductsTable
+            ).forEach { statement ->
                 exec(statement)
             }
-            
+
             val adminExists = UsersTable.selectAll().where { UsersTable.username eq "admin" }.any()
             if (!adminExists) {
                 UsersTable.insert {
@@ -53,7 +60,7 @@ object DatabaseFactory {
 
             if (ProductsTable.selectAll().count() == 0L) {
                 println("Server: Seeding products from MockData")
-                me.sergidalmau.cheflink.domain.models.MockData.products.forEach { p ->
+                MockData.products.forEach { p ->
                     ProductsTable.insert {
                         it[id] = p.id
                         it[name] = p.name
