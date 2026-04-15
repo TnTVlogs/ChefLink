@@ -14,16 +14,26 @@ import me.sergidalmau.cheflink.domain.util.HashUtils
 import me.sergidalmau.cheflink.ui.util.AppSession
 
 
-class RemoteUserRepository(private val baseUrl: String) : UserRepository {
+class RemoteUserRepository(
+    private val baseUrl: String,
+    private val settings: SettingsRepository = SettingsRepository()
+) : UserRepository {
     private val client = ApiClient.client
 
     override suspend fun login(username: String, password: String): User? {
         return try {
+            val hashedPassword = HashUtils.sha256(password)
             val response = client.post("$baseUrl/login") {
                 contentType(Json)
-                setBody(mapOf("username" to username, "password" to HashUtils.sha256(password)))
+                setBody(mapOf("username" to username, "password" to hashedPassword))
             }.body<AuthResponse>()
             
+            // Persist to disk
+            settings.accessToken = response.accessToken
+            settings.refreshToken = response.refreshToken
+            settings.persistedUser = response.user
+            
+            // Update memory
             AppSession.loginUser(response.user, response.accessToken, response.refreshToken)
             response.user
         } catch (_: Exception) {
@@ -39,11 +49,12 @@ class RemoteUserRepository(private val baseUrl: String) : UserRepository {
         email: String, 
         role: UserRole
     ): User {
+        val hashedPassword = HashUtils.sha256(password)
         val response = client.post("$baseUrl/register") {
             contentType(Json)
             setBody(mapOf(
                 "username" to username, 
-                "password" to HashUtils.sha256(password), 
+                "password" to hashedPassword, 
                 "firstName" to firstName,
                 "lastName" to lastName,
                 "email" to email,
@@ -59,11 +70,13 @@ class RemoteUserRepository(private val baseUrl: String) : UserRepository {
     }
 
     override suspend fun changePassword(userId: String, oldPassword: String, newPassword: String): Boolean {
+        val hashedOld = HashUtils.sha256(oldPassword)
+        val hashedNew = HashUtils.sha256(newPassword)
         val response = client.post("$baseUrl/users/$userId/password") {
             contentType(Json)
             setBody(mapOf(
-                "oldPassword" to HashUtils.sha256(oldPassword), 
-                "newPassword" to HashUtils.sha256(newPassword)
+                "oldPassword" to hashedOld, 
+                "newPassword" to hashedNew
             ))
         }
         return response.status.value in 200..299

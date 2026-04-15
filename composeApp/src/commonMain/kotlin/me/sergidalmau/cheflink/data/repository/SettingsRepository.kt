@@ -6,6 +6,8 @@ import com.russhwolf.settings.set
 import me.sergidalmau.cheflink.ui.util.Language
 import me.sergidalmau.cheflink.ui.util.ComponentSize
 import me.sergidalmau.cheflink.data.remote.BASE_URL
+import kotlinx.serialization.json.Json
+import me.sergidalmau.cheflink.domain.models.User
 
 class SettingsRepository(private val settings: Settings = Settings()) {
     
@@ -17,6 +19,7 @@ class SettingsRepository(private val settings: Settings = Settings()) {
         private const val KEY_SERVER_ENABLED = "server_enabled" // Desktop only
         private const val KEY_ACCESS_TOKEN = "access_token"
         private const val KEY_REFRESH_TOKEN = "refresh_token"
+        private const val KEY_USER_JSON = "user_json"
         private val DEFAULT_SERVER_URL = BASE_URL
     }
 
@@ -61,5 +64,28 @@ class SettingsRepository(private val settings: Settings = Settings()) {
         set(value) { 
             if (value == null) settings.remove(KEY_REFRESH_TOKEN)
             else settings[KEY_REFRESH_TOKEN] = value 
+        }
+
+    private val json = Json { ignoreUnknownKeys = true }
+
+    var userJson: String?
+        get() = settings[KEY_USER_JSON]
+        set(value) {
+            if (value == null) settings.remove(KEY_USER_JSON)
+            else settings[KEY_USER_JSON] = value
+        }
+
+    var persistedUser: User?
+        get() = userJson?.let {
+            try {
+                json.decodeFromString<User>(it)
+            } catch (_: Exception) {
+                null
+            }
+        }
+        set(value) = if (value != null) {
+            userJson = json.encodeToString(User.serializer(), value)
+        } else {
+            userJson = null
         }
 }

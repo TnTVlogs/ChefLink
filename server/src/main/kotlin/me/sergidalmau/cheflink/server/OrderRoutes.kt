@@ -11,7 +11,7 @@ import io.ktor.server.routing.route
 import io.ktor.server.routing.delete
 import io.ktor.server.routing.put
 import io.ktor.server.auth.*
-import io.ktor.server.auth.jwt.*
+import io.ktor.server.websocket.webSocket
 import io.ktor.websocket.Frame
 import io.ktor.websocket.close
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -24,6 +24,8 @@ import me.sergidalmau.cheflink.domain.models.Order
 import me.sergidalmau.cheflink.domain.models.OrderStatus
 import me.sergidalmau.cheflink.domain.models.ProductCategory
 import me.sergidalmau.cheflink.domain.models.UserRole
+import me.sergidalmau.cheflink.domain.models.AuthResponse
+import me.sergidalmau.cheflink.domain.models.RefreshRequest
 
 private val orderRepository = OrderRepository()
 private val userRepository = UserRepositoryImpl()
@@ -76,12 +78,17 @@ fun Route.ordersRoutes(tokenManager: TokenManager) {
             
             if (userId != null) {
                 val newAccessToken = tokenManager.generateAccessToken(userId)
-                // Optional: Rotate refresh token here too if desired, but for now just new access token
-                call.respond(mapOf("accessToken" to newAccessToken))
+                val newRefreshToken = tokenManager.generateRefreshToken(userId)
+                
+                // Persist new refresh token and revoke old one
+                userRepository.revokeRefreshToken(request.refreshToken)
+                userRepository.saveRefreshToken(userId, newRefreshToken, System.currentTimeMillis() + 7 * 24 * 60 * 60 * 1000)
+                
+                call.respond(mapOf("accessToken" to newAccessToken, "refreshToken" to newRefreshToken))
             } else {
                 call.respond(HttpStatusCode.Unauthorized, "Invalid or expired refresh token")
             }
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             call.respond(HttpStatusCode.BadRequest)
         }
     }
@@ -91,7 +98,7 @@ fun Route.ordersRoutes(tokenManager: TokenManager) {
             val request = call.receive<RefreshRequest>() // Client sends refresh token to revoke it
             userRepository.revokeRefreshToken(request.refreshToken)
             call.respond(HttpStatusCode.OK)
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             call.respond(HttpStatusCode.BadRequest)
         }
     }

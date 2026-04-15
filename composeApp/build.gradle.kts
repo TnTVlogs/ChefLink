@@ -38,6 +38,7 @@ kotlin {
             implementation(projects.shared)
             implementation(libs.ktor.client.logging)
             implementation(libs.ktor.clientWebsockets)
+            implementation(libs.ktor.clientAuth)
 
             // --- VIEWMODEL I LIFECYCLE ---
             implementation(libs.androidx.lifecycle.viewmodelCompose)

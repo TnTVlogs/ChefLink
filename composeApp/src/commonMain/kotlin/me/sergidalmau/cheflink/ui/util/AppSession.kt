@@ -24,6 +24,16 @@ object AppSession {
         _accessToken.value = newToken
     }
 
+    fun updateRefreshToken(newToken: String) {
+        _refreshToken.value = newToken
+    }
+
+    fun restoreSession(user: User, access: String, refresh: String) {
+        _currentUser.value = user
+        _accessToken.value = access
+        _refreshToken.value = refresh
+    }
+
     fun logout() {
         _currentUser.value = null
         _accessToken.value = null

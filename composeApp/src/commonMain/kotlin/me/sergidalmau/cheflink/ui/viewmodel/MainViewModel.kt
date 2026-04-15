@@ -31,7 +31,7 @@ class MainViewModel(
     private val settingsRepository: SettingsRepository = SettingsRepository()
 ) : ViewModel() {
     private var tableRepository: TableRepository = RemoteTableRepository(settingsRepository.serverUrl)
-    private var userRepository: UserRepository = RemoteUserRepository(settingsRepository.serverUrl)
+    private var userRepository: UserRepository = RemoteUserRepository(settingsRepository.serverUrl, settingsRepository)
     private var orderRepository: OrderRepository = RemoteOrderRepository(settingsRepository.serverUrl)
     private var productRepository: ProductRepository = RemoteProductRepository(settingsRepository.serverUrl)
 
@@ -90,6 +90,15 @@ class MainViewModel(
     private val serverManager = me.sergidalmau.cheflink.ui.util.getPlatformServerManager()
 
     init {
+        // Initialize session from persisted settings
+        val acc = settingsRepository.accessToken
+        val ref = settingsRepository.refreshToken
+        val user = settingsRepository.persistedUser
+        
+        if (acc != null && ref != null && user != null) {
+            AppSession.restoreSession(user, acc, ref)
+        }
+
         if (_isModeSelected.value) {
             checkApiHealth()
             loadProducts()
@@ -200,9 +209,7 @@ class MainViewModel(
         viewModelScope.launch {
             _loginError.value = null
             val loggedInUser = userRepository.login(username, password)
-            if (loggedInUser != null) {
-                AppSession.loginUser(loggedInUser)
-            } else {
+            if (loggedInUser == null) {
                 _loginError.value = "Credencials invàlides. Torna-ho a provar."
             }
         }
@@ -246,6 +253,9 @@ class MainViewModel(
 
     fun logout() {
         AppSession.logout()
+        settingsRepository.accessToken = null
+        settingsRepository.refreshToken = null
+        settingsRepository.persistedUser = null
         _loginError.value = null
     }
 
@@ -298,7 +308,7 @@ class MainViewModel(
 
         // Re-initialize repositories
         tableRepository = RemoteTableRepository(url)
-        userRepository = RemoteUserRepository(url)
+        userRepository = RemoteUserRepository(url, settingsRepository)
         orderRepository = RemoteOrderRepository(url)
         productRepository = RemoteProductRepository(url)
 

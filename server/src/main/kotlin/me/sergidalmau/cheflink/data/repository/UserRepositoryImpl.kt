@@ -2,11 +2,13 @@ package me.sergidalmau.cheflink.data.repository
 
 import me.sergidalmau.cheflink.data.local.RefreshTokensTable
 import me.sergidalmau.cheflink.data.local.UsersTable
+import me.sergidalmau.cheflink.data.local.DatabaseFactory
 import me.sergidalmau.cheflink.domain.models.User
 import me.sergidalmau.cheflink.domain.models.UserRole
 import me.sergidalmau.cheflink.domain.repository.UserRepository
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.and
+import org.jetbrains.exposed.v1.core.greater
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.update
