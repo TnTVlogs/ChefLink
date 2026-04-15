@@ -6,9 +6,12 @@ import io.ktor.client.request.setBody
 import io.ktor.http.ContentType.Application.Json
 import io.ktor.http.contentType
 import me.sergidalmau.cheflink.data.remote.ApiClient
+import me.sergidalmau.cheflink.domain.models.AuthResponse
 import me.sergidalmau.cheflink.domain.models.User
 import me.sergidalmau.cheflink.domain.models.UserRole
 import me.sergidalmau.cheflink.domain.repository.UserRepository
+import me.sergidalmau.cheflink.domain.util.HashUtils
+import me.sergidalmau.cheflink.ui.util.AppSession
 
 
 class RemoteUserRepository(private val baseUrl: String) : UserRepository {
@@ -16,10 +19,13 @@ class RemoteUserRepository(private val baseUrl: String) : UserRepository {
 
     override suspend fun login(username: String, password: String): User? {
         return try {
-            client.post("$baseUrl/login") {
+            val response = client.post("$baseUrl/login") {
                 contentType(Json)
-                setBody(mapOf("username" to username, "password" to password))
-            }.body<User>()
+                setBody(mapOf("username" to username, "password" to HashUtils.sha256(password)))
+            }.body<AuthResponse>()
+            
+            AppSession.loginUser(response.user, response.accessToken, response.refreshToken)
+            response.user
         } catch (_: Exception) {
             null
         }
@@ -37,7 +43,7 @@ class RemoteUserRepository(private val baseUrl: String) : UserRepository {
             contentType(Json)
             setBody(mapOf(
                 "username" to username, 
-                "password" to password, 
+                "password" to HashUtils.sha256(password), 
                 "firstName" to firstName,
                 "lastName" to lastName,
                 "email" to email,
@@ -55,7 +61,10 @@ class RemoteUserRepository(private val baseUrl: String) : UserRepository {
     override suspend fun changePassword(userId: String, oldPassword: String, newPassword: String): Boolean {
         val response = client.post("$baseUrl/users/$userId/password") {
             contentType(Json)
-            setBody(mapOf("oldPassword" to oldPassword, "newPassword" to newPassword))
+            setBody(mapOf(
+                "oldPassword" to HashUtils.sha256(oldPassword), 
+                "newPassword" to HashUtils.sha256(newPassword)
+            ))
         }
         return response.status.value in 200..299
     }

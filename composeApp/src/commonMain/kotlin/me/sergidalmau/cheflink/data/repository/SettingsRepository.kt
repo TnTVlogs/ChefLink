@@ -15,6 +15,8 @@ class SettingsRepository(private val settings: Settings = Settings()) {
         private const val KEY_COMPONENT_SIZE = "component_size"
         private const val KEY_SERVER_URL = "server_url"
         private const val KEY_SERVER_ENABLED = "server_enabled" // Desktop only
+        private const val KEY_ACCESS_TOKEN = "access_token"
+        private const val KEY_REFRESH_TOKEN = "refresh_token"
         private val DEFAULT_SERVER_URL = BASE_URL
     }
 
@@ -46,4 +48,18 @@ class SettingsRepository(private val settings: Settings = Settings()) {
             return url.ifEmpty { DEFAULT_SERVER_URL }
         }
         set(value) { settings[KEY_SERVER_URL] = value }
+
+    var accessToken: String?
+        get() = settings[KEY_ACCESS_TOKEN]
+        set(value) { 
+            if (value == null) settings.remove(KEY_ACCESS_TOKEN)
+            else settings[KEY_ACCESS_TOKEN] = value 
+        }
+
+    var refreshToken: String?
+        get() = settings[KEY_REFRESH_TOKEN]
+        set(value) { 
+            if (value == null) settings.remove(KEY_REFRESH_TOKEN)
+            else settings[KEY_REFRESH_TOKEN] = value 
+        }
 }

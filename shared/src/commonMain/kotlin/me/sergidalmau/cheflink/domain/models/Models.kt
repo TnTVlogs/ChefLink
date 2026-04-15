@@ -75,6 +75,18 @@ data class User(
     val role: UserRole
 )
 
+@Serializable
+data class AuthResponse(
+    val accessToken: String,
+    val refreshToken: String,
+    val user: User
+)
+
+@Serializable
+data class RefreshRequest(
+    val refreshToken: String
+)
+
 object MockData {
     val products = listOf(
         Product("p1", "Patates Braves", ProductCategory.Primers, 6.5, "Salsa casolana picant"),

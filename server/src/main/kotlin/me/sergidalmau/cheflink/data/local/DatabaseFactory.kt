@@ -36,14 +36,15 @@ object DatabaseFactory {
         }
 
         transaction(database) {
-            SchemaUtils.create(OrdersTable, OrderItemsTable, UsersTable, TablesTable, ProductsTable)
+            SchemaUtils.create(OrdersTable, OrderItemsTable, UsersTable, TablesTable, ProductsTable, RefreshTokensTable)
 
             MigrationUtils.statementsRequiredForDatabaseMigration(
                 OrdersTable,
                 OrderItemsTable,
                 UsersTable,
                 TablesTable,
-                ProductsTable
+                ProductsTable,
+                RefreshTokensTable
             ).forEach { statement ->
                 exec(statement)
             }

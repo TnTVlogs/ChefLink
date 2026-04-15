@@ -160,28 +160,6 @@ fun LoginScreen(
                     )
                 }
 
-                if (!isRegistering) {
-                    Spacer(modifier = Modifier.height(24.dp))
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(
-                            containerColor = colorScheme.primaryContainer.copy(alpha = 0.3f)
-                        ),
-                        shape = shapes.medium
-                    ) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Text(
-                                "Usuaris de prova:",
-                                style = typography.labelSmall,
-                                fontWeight = FontWeight.ExtraBold,
-                                color = colorScheme.primary
-                            )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text("• admin / admin (Administrador)", style = typography.labelSmall)
-                            Text("• cambrer / cambrer (Cambrer)", style = typography.labelSmall)
-                        }
-                    }
-                }
             }
         }
     }

@@ -12,6 +12,11 @@ import io.ktor.server.websocket.WebSockets
 import io.ktor.server.websocket.pingPeriod
 import io.ktor.server.websocket.timeout
 import me.sergidalmau.cheflink.data.local.DatabaseFactory
+import io.github.cdimascio.dotenv.dotenv
+import io.ktor.server.auth.*
+import io.ktor.server.auth.jwt.*
+import io.ktor.http.*
+import io.ktor.server.response.*
 import kotlin.time.Duration.Companion.seconds
 
 object ChefLinkServer {
@@ -24,7 +29,32 @@ object ChefLinkServer {
             DatabaseFactory.init()
             DiscoveryService.start()
             
-            engine = embeddedServer(Netty, port = 8080, host = "0.0.0.0") {
+            val env = dotenv {
+                ignoreIfMissing = true
+            }
+            
+            val tokenManager = TokenManager(env)
+            
+            val host = env["SERVER_HOST"] ?: "0.0.0.0"
+            val port = env["SERVER_PORT"]?.toIntOrNull() ?: 8080
+            
+            engine = embeddedServer(Netty, port = port, host = host) {
+                install(Authentication) {
+                    jwt("auth-jwt") {
+                        verifier(tokenManager.getVerifier())
+                        validate { credential ->
+                            if (credential.payload.getClaim("userId").asString() != "") {
+                                JWTPrincipal(credential.payload)
+                            } else {
+                                null
+                            }
+                        }
+                        challenge { defaultScheme, realm ->
+                            call.respond(HttpStatusCode.Unauthorized, "Token is invalid or expired")
+                        }
+                    }
+                }
+                
                 install(ContentNegotiation) {
                     json()
                 }
@@ -35,7 +65,7 @@ object ChefLinkServer {
                     masking = false
                 }
                 routing {
-                    ordersRoutes()
+                    ordersRoutes(tokenManager)
                 }
             }.start(wait = false)
             

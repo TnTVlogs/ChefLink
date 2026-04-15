@@ -1,14 +1,16 @@
 package me.sergidalmau.cheflink.data.repository
 
-import me.sergidalmau.cheflink.data.local.DatabaseFactory
+import me.sergidalmau.cheflink.data.local.RefreshTokensTable
 import me.sergidalmau.cheflink.data.local.UsersTable
 import me.sergidalmau.cheflink.domain.models.User
 import me.sergidalmau.cheflink.domain.models.UserRole
 import me.sergidalmau.cheflink.domain.repository.UserRepository
 import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.update
+import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.mindrot.jbcrypt.BCrypt
 
 class UserRepositoryImpl : UserRepository {
@@ -72,5 +74,26 @@ class UserRepositoryImpl : UserRepository {
         } else {
             false
         }
+    }
+
+    suspend fun saveRefreshToken(userId: String, token: String, expiresAt: Long) = DatabaseFactory.dbQuery {
+        RefreshTokensTable.insert {
+            it[RefreshTokensTable.userId] = userId
+            it[RefreshTokensTable.token] = token
+            it[RefreshTokensTable.expiresAt] = expiresAt
+        }
+        Unit
+    }
+
+    suspend fun validateRefreshToken(token: String): String? = DatabaseFactory.dbQuery {
+        RefreshTokensTable.selectAll()
+            .where { (RefreshTokensTable.token eq token) and (RefreshTokensTable.expiresAt greater System.currentTimeMillis()) }
+            .map { it[RefreshTokensTable.userId] }
+            .singleOrNull()
+    }
+
+    suspend fun revokeRefreshToken(token: String) = DatabaseFactory.dbQuery {
+        RefreshTokensTable.deleteWhere { RefreshTokensTable.token eq token }
+        Unit
     }
 }

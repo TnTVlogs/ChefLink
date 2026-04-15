@@ -8,11 +8,25 @@ object AppSession {
     private val _currentUser = MutableStateFlow<User?>(null)
     val currentUser = _currentUser.asStateFlow()
 
-    fun loginUser(user: User) {
+    private val _accessToken = MutableStateFlow<String?>(null)
+    val accessToken = _accessToken.asStateFlow()
+
+    private val _refreshToken = MutableStateFlow<String?>(null)
+    val refreshToken = _refreshToken.asStateFlow()
+
+    fun loginUser(user: User, accessToken: String, refreshToken: String) {
         _currentUser.value = user
+        _accessToken.value = accessToken
+        _refreshToken.value = refreshToken
+    }
+
+    fun updateAccessToken(newToken: String) {
+        _accessToken.value = newToken
     }
 
     fun logout() {
         _currentUser.value = null
+        _accessToken.value = null
+        _refreshToken.value = null
     }
 }
