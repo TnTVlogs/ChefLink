@@ -33,6 +33,10 @@ object ChefLinkServer {
                 ignoreIfMissing = true
             }
             
+            if (env["JWT_SECRET"] == null) {
+                println("WARNING: .env not found or JWT_SECRET is missing. Using defaults.")
+            }
+            
             val tokenManager = TokenManager(env)
             
             val host = env["SERVER_HOST"] ?: "0.0.0.0"
@@ -43,7 +47,8 @@ object ChefLinkServer {
                     jwt("auth-jwt") {
                         verifier(tokenManager.getVerifier())
                         validate { credential ->
-                            if (credential.payload.getClaim("userId").asString() != "") {
+                            val userId = credential.payload.getClaim("userId").asString()
+                            if (!userId.isNullOrEmpty()) {
                                 JWTPrincipal(credential.payload)
                             } else {
                                 null

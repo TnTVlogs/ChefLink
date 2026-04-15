@@ -4,9 +4,11 @@ import io.ktor.client.call.body
 import io.ktor.client.plugins.websocket.webSocket
 import io.ktor.client.request.delete
 import io.ktor.client.request.get
+import io.ktor.client.request.header
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
+import io.ktor.http.HttpMethod
 import io.ktor.http.contentType
 import io.ktor.websocket.Frame
 import io.ktor.websocket.readText
@@ -24,6 +26,7 @@ import me.sergidalmau.cheflink.data.remote.ApiClient
 import me.sergidalmau.cheflink.domain.models.Order
 import me.sergidalmau.cheflink.domain.models.OrderStatus
 import me.sergidalmau.cheflink.domain.repository.OrderRepository
+import me.sergidalmau.cheflink.ui.util.AppSession
 import java.util.Collections
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -215,7 +218,18 @@ class RemoteOrderRepository(private val baseUrl: String) : OrderRepository {
         val wsUrl = baseUrl.replace("http://", "ws://").replace("https://", "wss://")
         while (isActive) {
             try {
-                client.webSocket("$wsUrl/orders/updates") {
+                val token = AppSession.accessToken.value
+                client.webSocket(
+                    method = HttpMethod.Get,
+                    host = null, // Path-based in baseUrl
+                    port = null,
+                    path = "$wsUrl/orders/updates",
+                    request = {
+                        if (token != null) {
+                            header(io.ktor.http.HttpHeaders.Authorization, "Bearer $token")
+                        }
+                    }
+                ) {
                     println("WebSocket: Connected to $wsUrl/orders/updates")
                     
                     // Force an immediate refresh upon connection/reconnection
