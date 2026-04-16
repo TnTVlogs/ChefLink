@@ -219,12 +219,15 @@ class RemoteOrderRepository(private val baseUrl: String) : OrderRepository {
         while (isActive) {
             try {
                 val token = AppSession.accessToken.value
+                if (token.isNullOrBlank()) {
+                    _connectionState.value = false
+                    delay(3000.milliseconds)
+                    continue
+                }
                 client.webSocket(
                     urlString = wsUrl,
                     request = {
-                        if (token != null) {
-                            header(io.ktor.http.HttpHeaders.Authorization, "Bearer $token")
-                        }
+                        header(io.ktor.http.HttpHeaders.Authorization, "Bearer $token")
                     }
                 ) {
                     println("WebSocket: Connected to $wsUrl")
