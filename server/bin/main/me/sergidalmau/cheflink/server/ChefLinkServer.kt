@@ -26,12 +26,12 @@ object ChefLinkServer {
         if (engine != null) return true
 
         return try {
-            DatabaseFactory.init()
-            DiscoveryService.start()
-            
             val env = dotenv {
                 ignoreIfMissing = true
             }
+
+            DatabaseFactory.init(env)
+            DiscoveryService.start()
             
             if (env["JWT_SECRET"] == null) {
                 println("WARNING: .env not found or JWT_SECRET is missing. Using defaults.")

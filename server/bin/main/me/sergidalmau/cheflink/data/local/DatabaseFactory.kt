@@ -2,6 +2,7 @@ package me.sergidalmau.cheflink.data.local
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import io.github.cdimascio.dotenv.Dotenv
 import me.sergidalmau.cheflink.domain.models.MockData
 import org.jetbrains.exposed.v1.jdbc.Database
 import org.jetbrains.exposed.v1.jdbc.SchemaUtils
@@ -32,10 +33,10 @@ object DatabaseFactory {
         }
     }
 
-    fun init() {
-        val dbUrl = System.getenv("DB_URL")
-        val dbUser = System.getenv("DB_USER") ?: ""
-        val dbPassword = System.getenv("DB_PASSWORD") ?: ""
+    fun init(env: Dotenv? = null) {
+        val dbUrl = env?.get("DB_URL") ?: System.getenv("DB_URL")
+        val dbUser = env?.get("DB_USER") ?: System.getenv("DB_USER") ?: ""
+        val dbPassword = env?.get("DB_PASSWORD") ?: System.getenv("DB_PASSWORD") ?: ""
 
         if (dbUrl != null) {
             println("Server: Using MariaDB at $dbUrl")
@@ -64,7 +65,8 @@ object DatabaseFactory {
 
             val adminExists = UsersTable.selectAll().where { UsersTable.username eq "admin" }.any()
             if (!adminExists) {
-                val adminPassword = System.getenv("ADMIN_PASSWORD")?.takeIf { it.isNotBlank() } ?: generatePassword()
+                val configuredAdminPassword = env?.get("ADMIN_PASSWORD") ?: System.getenv("ADMIN_PASSWORD")
+                val adminPassword = configuredAdminPassword?.takeIf { it.isNotBlank() } ?: generatePassword()
                 val adminPasswordHash = BCrypt.hashpw(runBlocking { HashUtils.sha256(adminPassword) }, BCrypt.gensalt())
                 UsersTable.insert {
                     it[id] = "u-admin"
@@ -72,7 +74,7 @@ object DatabaseFactory {
                     it[passwordHash] = adminPasswordHash
                     it[role] = UserRole.Admin.name
                 }
-                if (System.getenv("ADMIN_PASSWORD").isNullOrBlank()) {
+                if (configuredAdminPassword.isNullOrBlank()) {
                     println("Server: Generated initial admin password for user 'admin': $adminPassword")
                     println("Server: Set ADMIN_PASSWORD in the environment to control the bootstrap password.")
                 } else {
