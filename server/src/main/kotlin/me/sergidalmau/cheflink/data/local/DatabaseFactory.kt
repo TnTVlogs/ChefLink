@@ -16,6 +16,8 @@ import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.migration.jdbc.MigrationUtils
 import org.mindrot.jbcrypt.BCrypt
 import java.security.SecureRandom
+import me.sergidalmau.cheflink.domain.util.HashUtils
+import kotlinx.coroutines.runBlocking
 
 object DatabaseFactory {
     private lateinit var database: Database
@@ -63,10 +65,11 @@ object DatabaseFactory {
             val adminExists = UsersTable.selectAll().where { UsersTable.username eq "admin" }.any()
             if (!adminExists) {
                 val adminPassword = System.getenv("ADMIN_PASSWORD")?.takeIf { it.isNotBlank() } ?: generatePassword()
+                val adminPasswordHash = BCrypt.hashpw(runBlocking { HashUtils.sha256(adminPassword) }, BCrypt.gensalt())
                 UsersTable.insert {
                     it[id] = "u-admin"
                     it[username] = "admin"
-                    it[passwordHash] = BCrypt.hashpw(adminPassword, BCrypt.gensalt())
+                    it[passwordHash] = adminPasswordHash
                     it[role] = UserRole.Admin.name
                 }
                 if (System.getenv("ADMIN_PASSWORD").isNullOrBlank()) {
