@@ -6,6 +6,7 @@ import io.ktor.client.request.setBody
 import io.ktor.http.ContentType.Application.Json
 import io.ktor.http.contentType
 import me.sergidalmau.cheflink.data.remote.ApiClient
+import me.sergidalmau.cheflink.data.remote.requireSecureRemoteBaseUrl
 import me.sergidalmau.cheflink.domain.models.AuthResponse
 import me.sergidalmau.cheflink.domain.models.User
 import me.sergidalmau.cheflink.domain.models.UserRole
@@ -22,6 +23,7 @@ class RemoteUserRepository(
 
     override suspend fun login(username: String, password: String): User? {
         return try {
+            requireSecureRemoteBaseUrl(baseUrl, "Login")
             val hashedPassword = HashUtils.sha256(password)
             val response = client.post("$baseUrl/login") {
                 contentType(Json)
@@ -49,6 +51,7 @@ class RemoteUserRepository(
         email: String, 
         role: UserRole
     ): User {
+        requireSecureRemoteBaseUrl(baseUrl, "User registration")
         val hashedPassword = HashUtils.sha256(password)
         val response = client.post("$baseUrl/register") {
             contentType(Json)
@@ -70,6 +73,7 @@ class RemoteUserRepository(
     }
 
     override suspend fun changePassword(userId: String, oldPassword: String, newPassword: String): Boolean {
+        requireSecureRemoteBaseUrl(baseUrl, "Password changes")
         val hashedOld = HashUtils.sha256(oldPassword)
         val hashedNew = HashUtils.sha256(newPassword)
         val response = client.post("$baseUrl/users/$userId/password") {

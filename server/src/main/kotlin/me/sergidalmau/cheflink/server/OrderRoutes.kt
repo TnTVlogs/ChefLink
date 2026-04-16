@@ -1,6 +1,7 @@
 package me.sergidalmau.cheflink.server
 
 import io.ktor.http.HttpStatusCode
+import io.ktor.http.auth.HttpAuthHeader
 import io.ktor.server.request.receive
 import io.ktor.server.response.respond
 import io.ktor.server.response.respondText
@@ -105,6 +106,18 @@ fun Route.ordersRoutes(tokenManager: TokenManager) {
 
     post("/register") {
         try {
+            if (userRepository.hasAnyUsers()) {
+                val authHeader = call.request.parseAuthorizationHeader()
+                val token = (authHeader as? HttpAuthHeader.Single)?.blob
+                val decoded = token?.let { runCatching { tokenManager.getVerifier().verify(it) }.getOrNull() }
+                val requesterId = decoded?.getClaim("userId")?.asString()
+                val requester = requesterId?.let { userRepository.getUserById(it) }
+
+                if (requester?.role != UserRole.Admin) {
+                    return@post call.respond(HttpStatusCode.Forbidden, "Nomes un administrador autenticat pot registrar usuaris")
+                }
+            }
+
             val data = call.receive<Map<String, String>>()
             val user = userRepository.register(
                 data["username"] ?: "",

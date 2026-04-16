@@ -233,9 +233,11 @@ class MainViewModel(
                 userRepository.register(username, password, firstName, lastName, email, role)
                 _registrationMessage.value = "Usuari $username registrat correctament."
                 _registrationSuccess.value = true
-            } catch (_: ResponseException) {
-                // This covers 400, 404, 500 etc.
-                _registrationMessage.value = "Error: El compte ja existeix o dades invàlides."
+            } catch (e: ResponseException) {
+                _registrationMessage.value = when (e.response.status.value) {
+                    403 -> "Error: només un administrador autenticat pot registrar usuaris."
+                    else -> "Error: El compte ja existeix o dades invàlides."
+                }
             } catch (e: Exception) {
                 _registrationMessage.value = "Error en registrar l'usuari: ${e.message}"
             }

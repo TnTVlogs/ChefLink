@@ -15,9 +15,20 @@ import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.migration.jdbc.MigrationUtils
 import org.mindrot.jbcrypt.BCrypt
+import java.security.SecureRandom
 
 object DatabaseFactory {
     private lateinit var database: Database
+    private val passwordAlphabet = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#%?"
+
+    private fun generatePassword(length: Int = 20): String {
+        val random = SecureRandom()
+        return buildString(length) {
+            repeat(length) {
+                append(passwordAlphabet[random.nextInt(passwordAlphabet.length)])
+            }
+        }
+    }
 
     fun init() {
         val dbUrl = System.getenv("DB_URL")
@@ -51,11 +62,18 @@ object DatabaseFactory {
 
             val adminExists = UsersTable.selectAll().where { UsersTable.username eq "admin" }.any()
             if (!adminExists) {
+                val adminPassword = System.getenv("ADMIN_PASSWORD")?.takeIf { it.isNotBlank() } ?: generatePassword()
                 UsersTable.insert {
                     it[id] = "u-admin"
                     it[username] = "admin"
-                    it[passwordHash] = BCrypt.hashpw("admin", BCrypt.gensalt())
+                    it[passwordHash] = BCrypt.hashpw(adminPassword, BCrypt.gensalt())
                     it[role] = UserRole.Admin.name
+                }
+                if (System.getenv("ADMIN_PASSWORD").isNullOrBlank()) {
+                    println("Server: Generated initial admin password for user 'admin': $adminPassword")
+                    println("Server: Set ADMIN_PASSWORD in the environment to control the bootstrap password.")
+                } else {
+                    println("Server: Created bootstrap admin user 'admin' from ADMIN_PASSWORD.")
                 }
             }
 

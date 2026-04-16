@@ -48,11 +48,10 @@ object ApiClient {
 
                 refreshTokens {
                     val refresh = AppSession.refreshToken.value ?: return@refreshTokens null
+                    val serverUrl = SettingsRepository().serverUrl
 
                     try {
-                        // Use a separate client or a basic request to avoid infinite recursion
-                        // Use the BASE_URL since it's available in this package
-                        val response = client.post("$BASE_URL/refresh") {
+                        val response = client.post("$serverUrl/refresh") {
                             markAsRefreshTokenRequest()
                             setBody(RefreshRequest(refresh))
                             contentType(ContentType.Application.Json)

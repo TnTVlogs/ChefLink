@@ -12,11 +12,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import me.sergidalmau.cheflink.domain.models.UserRole
 import me.sergidalmau.cheflink.ui.screens.login.components.FeedbackMessage
 import me.sergidalmau.cheflink.ui.screens.login.components.LoginForm
-import me.sergidalmau.cheflink.ui.screens.login.components.RegisterForm
 import me.sergidalmau.cheflink.ui.util.dragScroll
 import me.sergidalmau.cheflink.ui.util.LocalChefLinkStrings
 
@@ -36,18 +36,8 @@ fun LoginScreen(
 
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-    var firstName by remember { mutableStateOf("") }
-    var lastName by remember { mutableStateOf("") }
-    var email by remember { mutableStateOf("") }
-
-    var isRegistering by remember { mutableStateOf(false) }
-    var selectedRole by remember { mutableStateOf(UserRole.Cambrer) }
     var validationError by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
-
-    LaunchedEffect(registrationSuccess) {
-        if (registrationSuccess) isRegistering = false
-    }
 
     Box(
         modifier = Modifier.fillMaxSize().background(colorScheme.surface),
@@ -93,22 +83,13 @@ fun LoginScreen(
                     color = colorScheme.primary
                 )
                 Text(
-                    if (isRegistering) strings.register else strings.login,
+                    strings.login,
                     style = typography.bodyLarge,
                     color = colorScheme.onSurfaceVariant
                 )
 
                 FeedbackMessage(errorMessage, registrationMessage, registrationSuccess)
                 Spacer(modifier = Modifier.height(24.dp))
-
-                if (isRegistering) {
-                    RegisterForm(
-                        firstName, { firstName = it },
-                        lastName, { lastName = it },
-                        email, { email = it },
-                        selectedRole, { selectedRole = it }
-                    )
-                }
 
                 LoginForm(
                     username, { username = it },
@@ -128,37 +109,22 @@ fun LoginScreen(
 
                 Button(
                     onClick = {
-                        if (isRegistering) {
-                            if (username.isNotEmpty() && password.isNotEmpty() && firstName.isNotEmpty() && lastName.isNotEmpty() && email.isNotEmpty()) {
-                                onRegister(
-                                    username,
-                                    password,
-                                    firstName,
-                                    lastName,
-                                    email,
-                                    selectedRole
-                                ); validationError = ""
-                            } else validationError = "Si us plau, omple tots els camps"
-                        } else {
-                            if (username.isNotEmpty() && password.isNotEmpty()) {
-                                onLogin(username, password); validationError = ""
-                            } else validationError = "Si us plau, introdueix usuari i contrasenya"
-                        }
+                        if (username.isNotEmpty() && password.isNotEmpty()) {
+                            onLogin(username, password); validationError = ""
+                        } else validationError = "Si us plau, introdueix usuari i contrasenya"
                     },
                     modifier = Modifier.fillMaxWidth().height(56.dp), shape = shapes.large
                 ) {
-                    Text(if (isRegistering) strings.register else strings.login, style = typography.titleMedium)
+                    Text(strings.login, style = typography.titleMedium)
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
-                TextButton(onClick = {
-                    isRegistering = !isRegistering; validationError = ""; onResetRegistrationStatus()
-                }) {
-                    Text(
-                        if (isRegistering) "Ja tens compte? Inicia sessió" else "No tens compte? Registra't",
-                        style = typography.labelLarge
-                    )
-                }
+                Text(
+                    text = "Els nous usuaris els ha de crear un administrador des de configuracio.",
+                    style = typography.bodySmall,
+                    color = colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center
+                )
 
             }
         }

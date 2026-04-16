@@ -37,6 +37,26 @@ class UserRepositoryImpl : UserRepository {
         }
     }
 
+    suspend fun getUserById(userId: String): User? = DatabaseFactory.dbQuery {
+        UsersTable.selectAll()
+            .where { UsersTable.id eq userId }
+            .singleOrNull()
+            ?.let { row ->
+                User(
+                    id = row[UsersTable.id],
+                    username = row[UsersTable.username],
+                    firstName = row[UsersTable.firstName],
+                    lastName = row[UsersTable.lastName],
+                    email = row[UsersTable.email],
+                    role = UserRole.valueOf(row[UsersTable.role])
+                )
+            }
+    }
+
+    suspend fun hasAnyUsers(): Boolean = DatabaseFactory.dbQuery {
+        UsersTable.selectAll().limit(1).any()
+    }
+
     override suspend fun register(
         username: String, 
         password: String, 

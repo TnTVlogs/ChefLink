@@ -8,7 +8,6 @@ import io.ktor.client.request.header
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
-import io.ktor.http.HttpMethod
 import io.ktor.http.contentType
 import io.ktor.websocket.Frame
 import io.ktor.websocket.readText
@@ -23,6 +22,7 @@ import kotlinx.coroutines.isActive
 import me.sergidalmau.cheflink.data.util.getLocalData
 import me.sergidalmau.cheflink.data.util.saveLocalData
 import me.sergidalmau.cheflink.data.remote.ApiClient
+import me.sergidalmau.cheflink.data.remote.toWebSocketUrl
 import me.sergidalmau.cheflink.domain.models.Order
 import me.sergidalmau.cheflink.domain.models.OrderStatus
 import me.sergidalmau.cheflink.domain.repository.OrderRepository
@@ -215,22 +215,19 @@ class RemoteOrderRepository(private val baseUrl: String) : OrderRepository {
     }
 
     override fun observeUpdates(): Flow<Unit> = channelFlow {
-        val wsUrl = baseUrl.replace("http://", "ws://").replace("https://", "wss://")
+        val wsUrl = toWebSocketUrl(baseUrl, "/orders/updates")
         while (isActive) {
             try {
                 val token = AppSession.accessToken.value
                 client.webSocket(
-                    method = HttpMethod.Get,
-                    host = null, // Path-based in baseUrl
-                    port = null,
-                    path = "$wsUrl/orders/updates",
+                    urlString = wsUrl,
                     request = {
                         if (token != null) {
                             header(io.ktor.http.HttpHeaders.Authorization, "Bearer $token")
                         }
                     }
                 ) {
-                    println("WebSocket: Connected to $wsUrl/orders/updates")
+                    println("WebSocket: Connected to $wsUrl")
                     
                     // Force an immediate refresh upon connection/reconnection
                     trySend(Unit)
