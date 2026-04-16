@@ -12,7 +12,6 @@ import io.ktor.server.websocket.WebSockets
 import io.ktor.server.websocket.pingPeriod
 import io.ktor.server.websocket.timeout
 import me.sergidalmau.cheflink.data.local.DatabaseFactory
-import io.github.cdimascio.dotenv.dotenv
 import io.ktor.server.auth.*
 import io.ktor.server.auth.jwt.*
 import io.ktor.http.*
@@ -26,15 +25,18 @@ object ChefLinkServer {
         if (engine != null) return true
 
         return try {
-            val env = dotenv {
-                ignoreIfMissing = true
+            val (env, envSource) = EnvLoader.load()
+            if (envSource.startsWith("(missing")) {
+                println("WARNING: .env not found. $envSource")
+            } else {
+                println("Server: Loaded .env from $envSource")
             }
 
             DatabaseFactory.init(env)
             DiscoveryService.start()
             
             if (env["JWT_SECRET"] == null) {
-                println("WARNING: .env not found or JWT_SECRET is missing. Using defaults.")
+                println("WARNING: JWT_SECRET is missing. Using defaults.")
             }
             
             val tokenManager = TokenManager(env)
