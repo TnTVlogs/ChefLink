@@ -7,7 +7,9 @@ import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
+import io.ktor.client.statement.HttpResponse
 import io.ktor.http.ContentType
+import io.ktor.http.HttpHeaders.Authorization
 import io.ktor.http.contentType
 import io.ktor.websocket.Frame
 import io.ktor.websocket.readText
@@ -34,8 +36,10 @@ import kotlin.time.Duration.Companion.milliseconds
 sealed class PendingAction {
     @Serializable
     data class Create(val order: Order) : PendingAction()
+
     @Serializable
     data class UpdateStatus(val id: String, val status: OrderStatus) : PendingAction()
+
     @Serializable
     data class Delete(val id: String) : PendingAction()
 }
@@ -69,7 +73,7 @@ class RemoteOrderRepository(private val baseUrl: String) : OrderRepository {
         try {
             val actionsJson = Json.encodeToString(pendingActions.toList())
             saveLocalData("pending_actions", actionsJson)
-            
+
             val ordersJson = Json.encodeToString(cachedOrders)
             saveLocalData("cached_orders", ordersJson)
         } catch (e: Exception) {
@@ -86,7 +90,7 @@ class RemoteOrderRepository(private val baseUrl: String) : OrderRepository {
     override suspend fun createOrder(order: Order) {
         // Mark as un-synced initially
         val offlineOrder = order.copy(isSynced = false)
-        
+
         try {
             client.post("$baseUrl/orders") {
                 contentType(ContentType.Application.Json)
@@ -97,7 +101,7 @@ class RemoteOrderRepository(private val baseUrl: String) : OrderRepository {
             println("Queueing createOrder for ${order.id}: ${e.message}")
             _connectionState.value = false
             pendingActions.add(PendingAction.Create(offlineOrder))
-            
+
             // Update cache immediately for UI feedback
             val index = cachedOrders.indexOfFirst { it.id == order.id }
             if (index != -1) {
@@ -111,7 +115,11 @@ class RemoteOrderRepository(private val baseUrl: String) : OrderRepository {
 
     override suspend fun getPendingOrders(): List<Order> {
         return try {
-            val orders: List<Order> = client.get("$baseUrl/orders").body()
+            val response: HttpResponse = client.get("$baseUrl/orders")
+            if (response.status.value !in 200..299) {
+                throw Exception("HTTP ${response.status.value}")
+            }
+            val orders: List<Order> = response.body()
             _connectionState.value = true
             cachedOrders = orders.toMutableList()
             saveOfflineData()
@@ -119,7 +127,7 @@ class RemoteOrderRepository(private val baseUrl: String) : OrderRepository {
         } catch (e: Exception) {
             println("Error fetching orders, returning cache: ${e.message}")
             _connectionState.value = false
-            
+
             // Merge cached orders with pending creations
             val pendingCreations = pendingActions.filterIsInstance<PendingAction.Create>().map { it.order }
             val merged = (cachedOrders + pendingCreations).distinctBy { it.id }
@@ -138,7 +146,7 @@ class RemoteOrderRepository(private val baseUrl: String) : OrderRepository {
             println("Queueing updateStatus for $orderId: ${e.message}")
             _connectionState.value = false
             pendingActions.add(PendingAction.UpdateStatus(orderId, newStatus))
-            
+
             // Update cache immediately for UI feedback
             val index = cachedOrders.indexOfFirst { it.id == orderId }
             if (index != -1) {
@@ -156,7 +164,7 @@ class RemoteOrderRepository(private val baseUrl: String) : OrderRepository {
             println("Queueing deleteOrder for $orderId: ${e.message}")
             _connectionState.value = false
             pendingActions.add(PendingAction.Delete(orderId))
-            
+
             // Update cache immediately (hide it)
             cachedOrders.removeAll { it.id == orderId }
             saveOfflineData()
@@ -177,12 +185,14 @@ class RemoteOrderRepository(private val baseUrl: String) : OrderRepository {
                             setBody(action.order.copy(isSynced = true))
                         }
                     }
+
                     is PendingAction.UpdateStatus -> {
                         client.post("$baseUrl/orders/${action.id}/status") {
                             contentType(ContentType.Application.Json)
                             setBody(action.status)
                         }
                     }
+
                     is PendingAction.Delete -> {
                         client.delete("$baseUrl/orders/${action.id}")
                     }
@@ -227,14 +237,14 @@ class RemoteOrderRepository(private val baseUrl: String) : OrderRepository {
                 client.webSocket(
                     urlString = wsUrl,
                     request = {
-                        header(io.ktor.http.HttpHeaders.Authorization, "Bearer $token")
+                        header(Authorization, "Bearer $token")
                     }
                 ) {
                     println("WebSocket: Connected to $wsUrl")
-                    
+
                     // Force an immediate refresh upon connection/reconnection
                     trySend(Unit)
-                    
+
                     _connectionState.value = true
                     processPendingActions()
 

@@ -101,15 +101,7 @@ class MainViewModel(
 
         if (_isModeSelected.value) {
             checkApiHealth()
-            loadProducts()
-            startObservingUpdates()
-        }
-    }
-
-    private fun startObservingUpdates() {
-        updateObservationJob?.cancel()
-        updateObservationJob = viewModelScope.launch {
-            orderRepository.observeUpdates().collect {
+            if (AppSession.accessToken.value != null) {
                 loadTables()
                 loadProducts()
             }
@@ -211,6 +203,9 @@ class MainViewModel(
             val loggedInUser = userRepository.login(username, password)
             if (loggedInUser == null) {
                 _loginError.value = "Credencials invàlides. Torna-ho a provar."
+            } else {
+                loadTables()
+                loadProducts()
             }
         }
     }
@@ -259,6 +254,10 @@ class MainViewModel(
         settingsRepository.refreshToken = null
         settingsRepository.persistedUser = null
         _loginError.value = null
+        updateObservationJob?.cancel()
+        updateObservationJob = null
+        _tables.value = emptyList()
+        _products.value = emptyList()
     }
 
     fun changePassword(oldPass: String, newPass: String) {
@@ -316,7 +315,10 @@ class MainViewModel(
 
         // Restart everything
         checkApiHealth()
-        startObservingUpdates()
+        if (AppSession.accessToken.value != null) {
+            loadTables()
+            loadProducts()
+        }
     }
 
     private val _isDiscovering = MutableStateFlow(false)
@@ -398,8 +400,10 @@ class MainViewModel(
     fun selectClientMode() {
         _isModeSelected.value = true
         checkApiHealth()
-        loadProducts()
-        startObservingUpdates()
+        if (AppSession.accessToken.value != null) {
+            loadTables()
+            loadProducts()
+        }
     }
 
     fun selectHostMode() {

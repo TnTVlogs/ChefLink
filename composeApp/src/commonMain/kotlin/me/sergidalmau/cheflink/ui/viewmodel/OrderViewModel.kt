@@ -14,6 +14,7 @@ import kotlinx.coroutines.Job
 import me.sergidalmau.cheflink.domain.models.Order
 import me.sergidalmau.cheflink.domain.models.OrderStatus
 import me.sergidalmau.cheflink.domain.repository.OrderRepository
+import me.sergidalmau.cheflink.ui.util.AppSession
 
 class OrderViewModel(
     settingsRepository: SettingsRepository = SettingsRepository()
@@ -21,6 +22,7 @@ class OrderViewModel(
     private var repository: OrderRepository = RemoteOrderRepository(settingsRepository.serverUrl)
     private var updateObservationJob: Job? = null
     private var statusObservationJob: Job? = null
+    private var sessionObservationJob: Job? = null
     private val _orders = MutableStateFlow<List<Order>>(emptyList())
     val orders = _orders.asStateFlow()
 
@@ -53,11 +55,34 @@ class OrderViewModel(
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     init {
-        refreshOrders()
-        startObservations()
+        // Don't hit protected endpoints until we have a session token.
+        sessionObservationJob = viewModelScope.launch {
+            var lastToken: String? = null
+            AppSession.accessToken.collect { token ->
+                if (token == lastToken) return@collect
+                lastToken = token
+
+                if (token.isNullOrBlank()) {
+                    stopObservations()
+                    _orders.value = emptyList()
+                    _isConnected.value = false
+                } else {
+                    startObservations()
+                    refreshOrders()
+                }
+            }
+        }
+    }
+
+    private fun stopObservations() {
+        updateObservationJob?.cancel()
+        statusObservationJob?.cancel()
+        updateObservationJob = null
+        statusObservationJob = null
     }
 
     private fun startObservations() {
+        if (updateObservationJob != null || statusObservationJob != null) return
         updateObservationJob?.cancel()
         statusObservationJob?.cancel()
 
@@ -82,8 +107,7 @@ class OrderViewModel(
         if (url == currentRepoUrl) return
         currentRepoUrl = url
         repository = RemoteOrderRepository(url)
-        refreshOrders()
-        startObservations()
+        // Observations/refresh will be started by the session observer if logged in.
     }
 
     fun refreshOrders() {
