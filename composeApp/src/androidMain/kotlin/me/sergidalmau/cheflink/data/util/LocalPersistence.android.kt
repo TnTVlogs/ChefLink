@@ -16,6 +16,7 @@ actual fun saveLocalData(key: String, value: String) {
 }
 
 actual fun getLocalData(key: String): String? {
-    val prefs: SharedPreferences = appContext?.getSharedPreferences("cheflink_prefs", Context.MODE_PRIVATE) ?: return null
+    val prefs: SharedPreferences =
+        appContext?.getSharedPreferences("cheflink_prefs", Context.MODE_PRIVATE) ?: return null
     return prefs.getString(key, null)
 }

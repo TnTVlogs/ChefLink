@@ -120,7 +120,7 @@ fun LoginScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    text = "Els nous usuaris els ha de crear un administrador des de configuracio.",
+                    text = "Els nous usuaris els ha de crear un administrador des de configuració.",
                     style = typography.bodySmall,
                     color = colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center

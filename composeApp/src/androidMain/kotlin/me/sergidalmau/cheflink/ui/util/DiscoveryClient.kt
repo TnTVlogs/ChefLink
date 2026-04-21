@@ -89,7 +89,7 @@ actual class DiscoveryClient actual constructor() {
                 .filter { it.broadcast != null }
                 .map { it.broadcast }
                 .firstOrNull()
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             null
         }
     }

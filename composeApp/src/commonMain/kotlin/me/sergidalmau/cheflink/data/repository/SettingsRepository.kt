@@ -10,7 +10,7 @@ import kotlinx.serialization.json.Json
 import me.sergidalmau.cheflink.domain.models.User
 
 class SettingsRepository(private val settings: Settings = Settings()) {
-    
+
     companion object {
         private const val KEY_DARK_MODE = "dark_mode"
         private const val KEY_LANGUAGE = "language"
@@ -25,45 +25,63 @@ class SettingsRepository(private val settings: Settings = Settings()) {
 
     var isServerEnabled: Boolean
         get() = settings[KEY_SERVER_ENABLED, true]
-        set(value) { settings[KEY_SERVER_ENABLED] = value }
+        set(value) {
+            settings[KEY_SERVER_ENABLED] = value
+        }
 
     var isDarkMode: Boolean
         get() = settings[KEY_DARK_MODE, false]
-        set(value) { settings[KEY_DARK_MODE] = value }
+        set(value) {
+            settings[KEY_DARK_MODE] = value
+        }
 
     var language: Language
         get() {
             val name = settings[KEY_LANGUAGE, Language.CA.name]
-            return try { Language.valueOf(name) } catch (_: Exception) { Language.CA }
+            return try {
+                Language.valueOf(name)
+            } catch (_: Exception) {
+                Language.CA
+            }
         }
-        set(value) { settings[KEY_LANGUAGE] = value.name }
+        set(value) {
+            settings[KEY_LANGUAGE] = value.name
+        }
 
     var componentSize: ComponentSize
         get() {
             val name = settings[KEY_COMPONENT_SIZE, ComponentSize.MEDIUM.name]
-            return try { ComponentSize.valueOf(name) } catch (_: Exception) { ComponentSize.MEDIUM }
+            return try {
+                ComponentSize.valueOf(name)
+            } catch (_: Exception) {
+                ComponentSize.MEDIUM
+            }
         }
-        set(value) { settings[KEY_COMPONENT_SIZE] = value.name }
+        set(value) {
+            settings[KEY_COMPONENT_SIZE] = value.name
+        }
 
     var serverUrl: String
         get() {
             val url = settings[KEY_SERVER_URL, DEFAULT_SERVER_URL]
             return url.ifEmpty { DEFAULT_SERVER_URL }
         }
-        set(value) { settings[KEY_SERVER_URL] = value }
+        set(value) {
+            settings[KEY_SERVER_URL] = value
+        }
 
     var accessToken: String?
         get() = settings[KEY_ACCESS_TOKEN]
-        set(value) { 
+        set(value) {
             if (value == null) settings.remove(KEY_ACCESS_TOKEN)
-            else settings[KEY_ACCESS_TOKEN] = value 
+            else settings[KEY_ACCESS_TOKEN] = value
         }
 
     var refreshToken: String?
         get() = settings[KEY_REFRESH_TOKEN]
-        set(value) { 
+        set(value) {
             if (value == null) settings.remove(KEY_REFRESH_TOKEN)
-            else settings[KEY_REFRESH_TOKEN] = value 
+            else settings[KEY_REFRESH_TOKEN] = value
         }
 
     private val json = Json { ignoreUnknownKeys = true }

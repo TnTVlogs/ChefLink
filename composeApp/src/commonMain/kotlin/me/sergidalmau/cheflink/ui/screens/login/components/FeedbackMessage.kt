@@ -27,7 +27,6 @@ fun FeedbackMessage(
     val colorScheme = MaterialTheme.colorScheme
     val success = successColor()
     val bgColor = if (isSuccess) success else colorScheme.error
-    val textColor = bgColor
 
     Spacer(modifier = Modifier.height(16.dp))
     Card(
@@ -38,7 +37,7 @@ fun FeedbackMessage(
     ) {
         Text(
             text = msg ?: "",
-            color = textColor,
+            color = bgColor,
             style = MaterialTheme.typography.bodySmall,
             textAlign = TextAlign.Center,
             modifier = Modifier.padding(8.dp).fillMaxWidth()

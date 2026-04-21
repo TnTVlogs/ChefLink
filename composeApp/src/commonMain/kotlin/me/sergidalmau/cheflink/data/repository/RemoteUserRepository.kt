@@ -29,12 +29,12 @@ class RemoteUserRepository(
                 contentType(Json)
                 setBody(mapOf("username" to username, "password" to hashedPassword))
             }.body<AuthResponse>()
-            
+
             // Persist to disk
             settings.accessToken = response.accessToken
             settings.refreshToken = response.refreshToken
             settings.persistedUser = response.user
-            
+
             // Update memory
             AppSession.loginUser(response.user, response.accessToken, response.refreshToken)
             response.user
@@ -44,31 +44,33 @@ class RemoteUserRepository(
     }
 
     override suspend fun register(
-        username: String, 
-        password: String, 
-        firstName: String, 
-        lastName: String, 
-        email: String, 
+        username: String,
+        password: String,
+        firstName: String,
+        lastName: String,
+        email: String,
         role: UserRole
     ): User {
         requireSecureRemoteBaseUrl(baseUrl, "User registration")
         val hashedPassword = HashUtils.sha256(password)
         val response = client.post("$baseUrl/register") {
             contentType(Json)
-            setBody(mapOf(
-                "username" to username, 
-                "password" to hashedPassword, 
-                "firstName" to firstName,
-                "lastName" to lastName,
-                "email" to email,
-                "role" to role.name
-            ))
+            setBody(
+                mapOf(
+                    "username" to username,
+                    "password" to hashedPassword,
+                    "firstName" to firstName,
+                    "lastName" to lastName,
+                    "email" to email,
+                    "role" to role.name
+                )
+            )
         }
-        
+
         if (response.status.value !in 200..299) {
             throw io.ktor.client.plugins.ResponseException(response, "Error del servidor: ${response.status.value}")
         }
-        
+
         return response.body<User>()
     }
 
@@ -78,10 +80,12 @@ class RemoteUserRepository(
         val hashedNew = HashUtils.sha256(newPassword)
         val response = client.post("$baseUrl/users/$userId/password") {
             contentType(Json)
-            setBody(mapOf(
-                "oldPassword" to hashedOld, 
-                "newPassword" to hashedNew
-            ))
+            setBody(
+                mapOf(
+                    "oldPassword" to hashedOld,
+                    "newPassword" to hashedNew
+                )
+            )
         }
         return response.status.value in 200..299
     }

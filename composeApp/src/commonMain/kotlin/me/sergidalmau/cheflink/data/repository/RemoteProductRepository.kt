@@ -20,29 +20,46 @@ class RemoteProductRepository(private val baseUrl: String) : ProductRepository {
         return client.get("$baseUrl/products").body()
     }
 
-    override suspend fun createProduct(name: String, category: ProductCategory, price: Double, description: String?, isAvailable: Boolean): Product {
+    override suspend fun createProduct(
+        name: String,
+        category: ProductCategory,
+        price: Double,
+        description: String?,
+        isAvailable: Boolean
+    ): Product {
         return client.post("$baseUrl/products") {
             contentType(ContentType.Application.Json)
-            setBody(mapOf(
-                "name" to name,
-                "category" to category.name,
-                "price" to price.toString(),
-                "description" to (description ?: ""),
-                "isAvailable" to isAvailable.toString()
-            ))
+            setBody(
+                mapOf(
+                    "name" to name,
+                    "category" to category.name,
+                    "price" to price.toString(),
+                    "description" to (description ?: ""),
+                    "isAvailable" to isAvailable.toString()
+                )
+            )
         }.body()
     }
 
-    override suspend fun updateProduct(id: String, name: String, category: ProductCategory, price: Double, description: String?, isAvailable: Boolean) {
+    override suspend fun updateProduct(
+        id: String,
+        name: String,
+        category: ProductCategory,
+        price: Double,
+        description: String?,
+        isAvailable: Boolean
+    ) {
         client.put("$baseUrl/products/$id") {
             contentType(ContentType.Application.Json)
-            setBody(mapOf(
-                "name" to name,
-                "category" to category.name,
-                "price" to price.toString(),
-                "description" to (description ?: ""),
-                "isAvailable" to isAvailable.toString()
-            ))
+            setBody(
+                mapOf(
+                    "name" to name,
+                    "category" to category.name,
+                    "price" to price.toString(),
+                    "description" to (description ?: ""),
+                    "isAvailable" to isAvailable.toString()
+                )
+            )
         }
     }
 
