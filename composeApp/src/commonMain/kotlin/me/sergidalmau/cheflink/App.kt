@@ -64,6 +64,7 @@ import me.sergidalmau.cheflink.ui.util.SpanishStrings
 import me.sergidalmau.cheflink.ui.util.EnglishStrings
 import me.sergidalmau.cheflink.ui.util.FrenchStrings
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import kotlin.time.Clock
 
 enum class Screen {
@@ -79,7 +80,7 @@ fun App() {
     val language by mainViewModel.language.collectAsState()
     val serverUrl by mainViewModel.serverUrl.collectAsState()
 
-    androidx.compose.runtime.LaunchedEffect(serverUrl) {
+    LaunchedEffect(serverUrl) {
         orderViewModel.setServerUrl(serverUrl)
     }
 
@@ -142,7 +143,6 @@ fun App() {
                                 style = MaterialTheme.typography.bodyLarge
                             )
                         } else {
-                            // isApiHealthy is false
                             Text(
                                 strings.serverNotFound,
                                 color = MaterialTheme.colorScheme.error,
@@ -202,7 +202,11 @@ fun App() {
                                         onClick = { currentScreen = Screen.Settings },
                                         modifier = Modifier.weight(1f)
                                     ) {
-                                        Icon(Icons.Default.Settings, null, modifier = Modifier.size(18.dp))
+                                        Icon(
+                                            imageVector = Icons.Default.Settings,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(18.dp)
+                                        )
                                         Spacer(Modifier.width(8.dp))
                                         Text(strings.settings)
                                     }
@@ -216,17 +220,12 @@ fun App() {
                 val registrationSuccess by mainViewModel.registrationSuccess.collectAsState()
                 LoginScreen(
                     onLogin = { username, password -> mainViewModel.login(username, password) },
-                    onRegister = { uname, pass, fname, lname, email, role ->
-                        mainViewModel.register(uname, pass, fname, lname, email, role)
-                    },
                     errorMessage = loginError,
                     registrationMessage = registrationMessage,
-                    registrationSuccess = registrationSuccess,
-                    onResetRegistrationStatus = { mainViewModel.resetRegistrationStatus() }
+                    registrationSuccess = registrationSuccess
                 )
             }
 
-            // Si no estem en un dels estats anteriors (bloquejants), mostrem l'app normal amb Scaffold
             if (currentScreen == Screen.Settings || (isApiHealthy == true && user != null)) {
                 Scaffold(
                     containerColor = MaterialTheme.colorScheme.background,

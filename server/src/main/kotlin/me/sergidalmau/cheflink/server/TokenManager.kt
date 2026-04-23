@@ -1,6 +1,7 @@
 package me.sergidalmau.cheflink.server
 
 import com.auth0.jwt.JWT
+import com.auth0.jwt.JWTVerifier
 import com.auth0.jwt.algorithms.Algorithm
 import io.github.cdimascio.dotenv.Dotenv
 import java.util.*
@@ -12,7 +13,6 @@ class TokenManager(env: Dotenv) {
     
     val algorithm: Algorithm = Algorithm.HMAC256(secret)
 
-    // 15 minutes for Access Token
     fun generateAccessToken(userId: String): String {
         return JWT.create()
             .withAudience(audience)
@@ -22,7 +22,6 @@ class TokenManager(env: Dotenv) {
             .sign(algorithm)
     }
 
-    // 7 days for Refresh Token
     fun generateRefreshToken(userId: String): String {
         return JWT.create()
             .withAudience(audience)
@@ -33,7 +32,7 @@ class TokenManager(env: Dotenv) {
             .sign(algorithm)
     }
     
-    fun getVerifier() = JWT.require(algorithm)
+    fun getVerifier(): JWTVerifier = JWT.require(algorithm)
         .withAudience(audience)
         .withIssuer(issuer)
         .build()

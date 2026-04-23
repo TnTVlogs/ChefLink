@@ -14,7 +14,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import me.sergidalmau.cheflink.domain.models.UserRole
 import me.sergidalmau.cheflink.ui.screens.login.components.FeedbackMessage
 import me.sergidalmau.cheflink.ui.screens.login.components.LoginForm
 import me.sergidalmau.cheflink.ui.util.dragScroll
@@ -23,11 +22,9 @@ import me.sergidalmau.cheflink.ui.util.LocalChefLinkStrings
 @Composable
 fun LoginScreen(
     onLogin: (String, String) -> Unit,
-    onRegister: (String, String, String, String, String, UserRole) -> Unit = { _, _, _, _, _, _ -> },
     errorMessage: String? = null,
     registrationMessage: String? = null,
-    registrationSuccess: Boolean = false,
-    onResetRegistrationStatus: () -> Unit = {}
+    registrationSuccess: Boolean = false
 ) {
     val colorScheme = MaterialTheme.colorScheme
     val typography = MaterialTheme.typography

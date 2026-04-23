@@ -47,7 +47,7 @@ class OrderViewModel(
     val filteredOrders = combine(_orders, _filterStatuses, _filterTable) { orders, statuses, table ->
         orders.filter { order ->
             (statuses.isEmpty() || statuses.contains(order.status)) &&
-            (table == null || order.tableNumber == table)
+                    (table == null || order.tableNumber == table)
         }.sortedWith(
             compareBy<Order> { statusPriority[it.status] ?: 99 }
                 .thenByDescending { it.timestamp }
@@ -55,7 +55,6 @@ class OrderViewModel(
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     init {
-        // Don't hit protected endpoints until we have a session token.
         sessionObservationJob = viewModelScope.launch {
             var lastToken: String? = null
             AppSession.accessToken.collect { token ->
@@ -86,14 +85,12 @@ class OrderViewModel(
         updateObservationJob?.cancel()
         statusObservationJob?.cancel()
 
-        // Observar canvis en temps real via WebSocket
         updateObservationJob = viewModelScope.launch {
             repository.observeUpdates().collect {
                 refreshOrders()
             }
         }
 
-        // Observar estat de la connexió
         statusObservationJob = viewModelScope.launch {
             repository.getUpdateStatus().collect {
                 _isConnected.value = it
@@ -107,7 +104,6 @@ class OrderViewModel(
         if (url == currentRepoUrl) return
         currentRepoUrl = url
         repository = RemoteOrderRepository(url)
-        // Observations/refresh will be started by the session observer if logged in.
     }
 
     fun refreshOrders() {

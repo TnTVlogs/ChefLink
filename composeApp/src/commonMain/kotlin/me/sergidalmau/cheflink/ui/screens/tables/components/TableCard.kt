@@ -68,7 +68,12 @@ fun TableCard(
                 modifier = Modifier.background(bgColor).padding(cardPadding).fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Icon(Icons.Default.TableBar, null, modifier = Modifier.size(iconSize), tint = statusColor)
+                Icon(
+                    imageVector = Icons.Default.TableBar,
+                    contentDescription = null,
+                    modifier = Modifier.size(iconSize),
+                    tint = statusColor
+                )
                 Spacer(modifier = Modifier.height(if (componentSize == ComponentSize.SMALL) 4.dp else 12.dp))
                 Text(
                     "${strings.table} ${table.number}",
@@ -98,7 +103,14 @@ fun TableCard(
                 }
                 if (isEditMode) {
                     Spacer(modifier = Modifier.height(if (componentSize == ComponentSize.SMALL) 6.dp else 12.dp))
-                    Row(horizontalArrangement = Arrangement.spacedBy(if (componentSize == ComponentSize.SMALL) 2.dp else 8.dp)) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(
+                            if (componentSize == ComponentSize.SMALL)
+                                2.dp
+                            else
+                                8.dp
+                        )
+                    ) {
                         IconButton(
                             onClick = { showEditDialog = true },
                             modifier = Modifier.size(if (componentSize == ComponentSize.SMALL) 28.dp else 48.dp)

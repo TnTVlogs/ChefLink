@@ -56,7 +56,7 @@ object ChefLinkServer {
                                 null
                             }
                         }
-                        challenge { defaultScheme, realm ->
+                        challenge { _, _ ->
                             call.respond(HttpStatusCode.Unauthorized, "Token is invalid or expired")
                         }
                     }

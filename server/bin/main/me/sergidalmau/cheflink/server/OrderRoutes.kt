@@ -47,21 +47,23 @@ fun Route.ordersRoutes(tokenManager: TokenManager) {
         call.respondText("OK")
     }
 
-    // Public auth routes
     post("/login") {
         try {
             val credentials = call.receive<Map<String, String>>()
             val username = credentials["username"] ?: ""
             val password = credentials["password"] ?: ""
-            
+
             val user = userRepository.login(username, password)
             if (user != null) {
                 val accessToken = tokenManager.generateAccessToken(user.id)
                 val refreshToken = tokenManager.generateRefreshToken(user.id)
-                
-                // Persist refresh token in DB
-                userRepository.saveRefreshToken(user.id, refreshToken, System.currentTimeMillis() + 7 * 24 * 60 * 60 * 1000)
-                
+
+                userRepository.saveRefreshToken(
+                    user.id,
+                    refreshToken,
+                    System.currentTimeMillis() + 7 * 24 * 60 * 60 * 1000
+                )
+
                 call.respond(AuthResponse(accessToken, refreshToken, user))
             } else {
                 call.respond(HttpStatusCode.Unauthorized, "Credencials incorrectes")
@@ -76,15 +78,18 @@ fun Route.ordersRoutes(tokenManager: TokenManager) {
         try {
             val request = call.receive<RefreshRequest>()
             val userId = userRepository.validateRefreshToken(request.refreshToken)
-            
+
             if (userId != null) {
                 val newAccessToken = tokenManager.generateAccessToken(userId)
                 val newRefreshToken = tokenManager.generateRefreshToken(userId)
-                
-                // Persist new refresh token and revoke old one
+
                 userRepository.revokeRefreshToken(request.refreshToken)
-                userRepository.saveRefreshToken(userId, newRefreshToken, System.currentTimeMillis() + 7 * 24 * 60 * 60 * 1000)
-                
+                userRepository.saveRefreshToken(
+                    userId,
+                    newRefreshToken,
+                    System.currentTimeMillis() + 7 * 24 * 60 * 60 * 1000
+                )
+
                 call.respond(mapOf("accessToken" to newAccessToken, "refreshToken" to newRefreshToken))
             } else {
                 call.respond(HttpStatusCode.Unauthorized, "Invalid or expired refresh token")
@@ -96,7 +101,7 @@ fun Route.ordersRoutes(tokenManager: TokenManager) {
 
     post("/logout") {
         try {
-            val request = call.receive<RefreshRequest>() // Client sends refresh token to revoke it
+            val request = call.receive<RefreshRequest>()
             userRepository.revokeRefreshToken(request.refreshToken)
             call.respond(HttpStatusCode.OK)
         } catch (_: Exception) {
@@ -114,7 +119,10 @@ fun Route.ordersRoutes(tokenManager: TokenManager) {
                 val requester = requesterId?.let { userRepository.getUserById(it) }
 
                 if (requester?.role != UserRole.Admin) {
-                    return@post call.respond(HttpStatusCode.Forbidden, "Nomes un administrador autenticat pot registrar usuaris")
+                    return@post call.respond(
+                        HttpStatusCode.Forbidden,
+                        "Nomes un administrador autenticat pot registrar usuaris"
+                    )
                 }
             }
 
@@ -133,9 +141,8 @@ fun Route.ordersRoutes(tokenManager: TokenManager) {
         }
     }
 
-    // Protected routes
     authenticate("auth-jwt") {
-        
+
         route("/orders") {
             webSocket("/updates") {
                 println("Server: New WebSocket session established")
@@ -256,7 +263,8 @@ fun Route.ordersRoutes(tokenManager: TokenManager) {
             delete("/{number}") {
                 try {
                     val number =
-                        call.parameters["number"]?.toIntOrNull() ?: return@delete call.respond(HttpStatusCode.BadRequest)
+                        call.parameters["number"]?.toIntOrNull()
+                            ?: return@delete call.respond(HttpStatusCode.BadRequest)
                     tableRepository.deleteTable(number)
                     notifyClients()
                     call.respond(HttpStatusCode.OK)

@@ -22,9 +22,11 @@ import me.sergidalmau.cheflink.domain.models.Product
 import me.sergidalmau.cheflink.domain.models.ProductCategory
 import me.sergidalmau.cheflink.domain.models.UserRole
 import me.sergidalmau.cheflink.domain.repository.ProductRepository
+import me.sergidalmau.cheflink.getPlatform
 import me.sergidalmau.cheflink.ui.util.AppSession
 import me.sergidalmau.cheflink.ui.util.ComponentSize
 import me.sergidalmau.cheflink.ui.util.Language
+import me.sergidalmau.cheflink.ui.util.getPlatformServerManager
 import kotlin.time.Duration.Companion.milliseconds
 
 class MainViewModel(
@@ -59,7 +61,7 @@ class MainViewModel(
     private val _products = MutableStateFlow<List<Product>>(emptyList())
     val products = _products.asStateFlow()
 
-    private val _isApiHealthy = MutableStateFlow<Boolean?>(null) // null = initial/checking, true/false = result
+    private val _isApiHealthy = MutableStateFlow<Boolean?>(null)
     val isApiHealthy = _isApiHealthy.asStateFlow()
 
     private val _healthErrorMessage = MutableStateFlow<String?>(null)
@@ -77,8 +79,7 @@ class MainViewModel(
     private val _isEditMode = MutableStateFlow(false)
     val isEditMode = _isEditMode.asStateFlow()
 
-    // Mode Selection States (Desktop Only)
-    private val _isModeSelected = MutableStateFlow(me.sergidalmau.cheflink.getPlatform().name.contains("Android"))
+    private val _isModeSelected = MutableStateFlow(getPlatform().name.contains("Android"))
     val isModeSelected = _isModeSelected.asStateFlow()
 
     private val _isServerStarting = MutableStateFlow(false)
@@ -87,14 +88,13 @@ class MainViewModel(
     private val _serverStartError = MutableStateFlow<String?>(null)
     val serverStartError = _serverStartError.asStateFlow()
 
-    private val serverManager = me.sergidalmau.cheflink.ui.util.getPlatformServerManager()
+    private val serverManager = getPlatformServerManager()
 
     init {
-        // Initialize session from persisted settings
         val acc = settingsRepository.accessToken
         val ref = settingsRepository.refreshToken
         val user = settingsRepository.persistedUser
-        
+
         if (acc != null && ref != null && user != null) {
             AppSession.restoreSession(user, acc, ref)
         }
@@ -239,11 +239,6 @@ class MainViewModel(
         }
     }
 
-    fun resetRegistrationStatus() {
-        _registrationSuccess.value = false
-        _registrationMessage.value = null
-    }
-
     fun clearRegistrationMessage() {
         _registrationMessage.value = null
     }
@@ -298,7 +293,6 @@ class MainViewModel(
     fun toggleServer(enabled: Boolean) {
         _isServerEnabled.value = enabled
         settingsRepository.isServerEnabled = enabled
-        // Nota: A escriptori, això pot requerir reinici o una crida directa a ChefLinkServer
     }
 
     fun setServerUrl(url: String) {
@@ -307,13 +301,11 @@ class MainViewModel(
         settingsRepository.serverUrl = url
         _serverUrl.value = url
 
-        // Re-initialize repositories
         tableRepository = RemoteTableRepository(url)
         userRepository = RemoteUserRepository(url, settingsRepository)
         orderRepository = RemoteOrderRepository(url)
         productRepository = RemoteProductRepository(url)
 
-        // Restart everything
         checkApiHealth()
         if (AppSession.accessToken.value != null) {
             loadTables()
@@ -329,10 +321,8 @@ class MainViewModel(
             _isDiscovering.value = true
             _registrationMessage.value = "Provant connexió al núvol..."
 
-            // Guardem l'antiga per si falla local
             val oldUrl = _serverUrl.value
 
-            // 1. Provar directament el domini principal
             val cloudUrl = "https://cheflink.sergidalmau.dev"
             setServerUrl(cloudUrl)
 
@@ -347,7 +337,6 @@ class MainViewModel(
                 _healthErrorMessage.value = null
                 _registrationMessage.value = "Connectat al núvol satisfactòriament!"
             } else {
-                // 2. Si falla el núvol, busquem a la xarxa local
                 setServerUrl(oldUrl)
                 _registrationMessage.value = "Buscant servidor a la xarxa local..."
                 val discoveredUrl = DiscoveryClient().discover()

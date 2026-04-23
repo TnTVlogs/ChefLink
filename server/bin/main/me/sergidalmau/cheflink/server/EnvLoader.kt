@@ -34,7 +34,6 @@ object EnvLoader {
             }
         }
 
-        // Not found: still return a Dotenv that won't throw.
         val fallback = loadFromDirectory(cwd)
         return fallback to "(missing: searched ${candidates.joinToString { it.absolutePath }})"
     }

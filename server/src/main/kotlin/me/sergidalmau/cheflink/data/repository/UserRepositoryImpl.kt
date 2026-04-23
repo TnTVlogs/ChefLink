@@ -58,16 +58,16 @@ class UserRepositoryImpl : UserRepository {
     }
 
     override suspend fun register(
-        username: String, 
-        password: String, 
-        firstName: String, 
-        lastName: String, 
-        email: String, 
+        username: String,
+        password: String,
+        firstName: String,
+        lastName: String,
+        email: String,
         role: UserRole
     ): User = DatabaseFactory.dbQuery {
         val id = "u${System.currentTimeMillis()}"
         val hash = BCrypt.hashpw(password, BCrypt.gensalt())
-        
+
         UsersTable.insert {
             it[UsersTable.id] = id
             it[UsersTable.username] = username
@@ -81,22 +81,23 @@ class UserRepositoryImpl : UserRepository {
         User(id, username, email, firstName, lastName, role)
     }
 
-    override suspend fun changePassword(userId: String, oldPassword: String, newPassword: String): Boolean = DatabaseFactory.dbQuery {
-        val row = UsersTable.selectAll()
-            .where { UsersTable.id eq userId }
-            .singleOrNull() ?: return@dbQuery false
+    override suspend fun changePassword(userId: String, oldPassword: String, newPassword: String): Boolean =
+        DatabaseFactory.dbQuery {
+            val row = UsersTable.selectAll()
+                .where { UsersTable.id eq userId }
+                .singleOrNull() ?: return@dbQuery false
 
-        val hash = row[UsersTable.passwordHash]
-        if (BCrypt.checkpw(oldPassword, hash)) {
-            val newHash = BCrypt.hashpw(newPassword, BCrypt.gensalt())
-            UsersTable.update({ UsersTable.id eq userId }) {
-                it[passwordHash] = newHash
+            val hash = row[UsersTable.passwordHash]
+            if (BCrypt.checkpw(oldPassword, hash)) {
+                val newHash = BCrypt.hashpw(newPassword, BCrypt.gensalt())
+                UsersTable.update({ UsersTable.id eq userId }) {
+                    it[passwordHash] = newHash
+                }
+                true
+            } else {
+                false
             }
-            true
-        } else {
-            false
         }
-    }
 
     suspend fun saveRefreshToken(userId: String, token: String, expiresAt: Long) = DatabaseFactory.dbQuery {
         RefreshTokensTable.insert {

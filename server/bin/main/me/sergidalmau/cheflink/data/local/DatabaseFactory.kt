@@ -22,13 +22,13 @@ import kotlinx.coroutines.runBlocking
 
 object DatabaseFactory {
     private lateinit var database: Database
-    private val passwordAlphabet = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#%?"
+    private const val PASSWORD_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#%?"
 
     private fun generatePassword(length: Int = 20): String {
         val random = SecureRandom()
         return buildString(length) {
             repeat(length) {
-                append(passwordAlphabet[random.nextInt(passwordAlphabet.length)])
+                append(PASSWORD_ALPHABET[random.nextInt(PASSWORD_ALPHABET.length)])
             }
         }
     }

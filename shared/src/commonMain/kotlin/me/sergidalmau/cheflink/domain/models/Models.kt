@@ -13,8 +13,8 @@ enum class OrderStatus {
     PENDING,
     PREPARING,
     READY,
-    ENVIADA,  // Added for compatibility
-    SERVIDA,  // Added for compatibility
+    ENVIADA,
+    SERVIDA,
     CANCELLED
 }
 
