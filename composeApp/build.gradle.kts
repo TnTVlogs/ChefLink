@@ -1,5 +1,10 @@
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import java.util.Properties
+
+val localProps = Properties().apply {
+    rootProject.file("local.properties").takeIf { it.exists() }?.inputStream()?.use { load(it) }
+}
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -80,9 +85,18 @@ android {
             excludes += "/META-INF/io.netty.versions.properties"
         }
     }
+    signingConfigs {
+        create("release") {
+            storeFile = localProps.getProperty("signing.keystore.path")?.let { file(it) }
+            storePassword = localProps.getProperty("signing.keystore.password")
+            keyAlias = localProps.getProperty("signing.key.alias")
+            keyPassword = localProps.getProperty("signing.key.password")
+        }
+    }
     buildTypes {
         getByName("release") {
             isMinifyEnabled = false
+            signingConfig = signingConfigs.getByName("release")
         }
     }
     compileOptions {
