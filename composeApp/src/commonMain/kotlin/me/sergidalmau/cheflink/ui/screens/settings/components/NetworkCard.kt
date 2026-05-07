@@ -57,7 +57,7 @@ fun NetworkCard(
     val pendingServerUrl by viewModel.pendingServerUrl.collectAsState()
 
     val platformName = remember { getPlatform().name }
-    val isDesktop = platformName.contains("Desktop", ignoreCase = true)
+    val isDesktop = !platformName.contains("Android", ignoreCase = true)
     val isServerEnabled by viewModel.isServerEnabled.collectAsState()
     val isRunningAsHost by viewModel.isRunningAsHost.collectAsState()
     val isHostMode = isDesktop && (isRunningAsHost || isServerEnabled)
