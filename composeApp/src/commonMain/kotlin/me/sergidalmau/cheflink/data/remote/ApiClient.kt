@@ -83,9 +83,7 @@ object ApiClient {
 
                 sendWithoutRequest { request ->
                     val path = request.url.encodedPath
-                    !path.contains("login") && !path.contains("register") && !path.contains("refresh") && !path.contains(
-                        "health"
-                    )
+                    !path.contains("login") && !path.contains("refresh") && !path.contains("health")
                 }
             }
         }

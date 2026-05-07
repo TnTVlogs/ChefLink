@@ -48,6 +48,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import me.sergidalmau.cheflink.domain.models.Order
 import me.sergidalmau.cheflink.domain.models.OrderStatus
+import me.sergidalmau.cheflink.ui.screens.login.ForceChangePasswordScreen
 import me.sergidalmau.cheflink.ui.screens.login.LoginScreen
 import me.sergidalmau.cheflink.ui.screens.order.OrderScreen
 import me.sergidalmau.cheflink.ui.screens.orderslist.OrdersListScreen
@@ -224,9 +225,15 @@ fun App() {
                     registrationMessage = registrationMessage,
                     registrationSuccess = registrationSuccess
                 )
+            } else if (user?.mustChangePassword == true) {
+                val registrationMessage by mainViewModel.registrationMessage.collectAsState()
+                ForceChangePasswordScreen(
+                    onChangePassword = { old, new -> mainViewModel.changePassword(old, new) },
+                    message = registrationMessage
+                )
             }
 
-            if (currentScreen == Screen.Settings || (isApiHealthy == true && user != null)) {
+            if (currentScreen == Screen.Settings || (isApiHealthy == true && user != null && user?.mustChangePassword != true)) {
                 Scaffold(
                     containerColor = MaterialTheme.colorScheme.background,
                     topBar = {

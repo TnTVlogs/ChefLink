@@ -33,6 +33,7 @@ object UsersTable : Table("users") {
     val lastName = varchar("last_name", 100).default("")
     val email = varchar("email", 100).default("")
     val role = varchar("role", 20)
+    val mustChangePassword = bool("must_change_password").default(false)
     override val primaryKey = PrimaryKey(id)
 }
 

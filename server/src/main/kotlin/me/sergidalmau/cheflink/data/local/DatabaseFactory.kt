@@ -66,17 +66,18 @@ object DatabaseFactory {
             val adminExists = UsersTable.selectAll().where { UsersTable.username eq "admin" }.any()
             if (!adminExists) {
                 val configuredAdminPassword = env?.get("ADMIN_PASSWORD") ?: System.getenv("ADMIN_PASSWORD")
-                val adminPassword = configuredAdminPassword?.takeIf { it.isNotBlank() } ?: generatePassword()
+                val usingDefault = configuredAdminPassword.isNullOrBlank()
+                val adminPassword = if (usingDefault) "admin" else configuredAdminPassword!!
                 val adminPasswordHash = BCrypt.hashpw(runBlocking { HashUtils.sha256(adminPassword) }, BCrypt.gensalt())
                 UsersTable.insert {
                     it[id] = "u-admin"
                     it[username] = "admin"
                     it[passwordHash] = adminPasswordHash
                     it[role] = UserRole.Admin.name
+                    it[mustChangePassword] = usingDefault
                 }
-                if (configuredAdminPassword.isNullOrBlank()) {
-                    println("Server: Generated initial admin password for user 'admin': $adminPassword")
-                    println("Server: Set ADMIN_PASSWORD in the environment to control the bootstrap password.")
+                if (usingDefault) {
+                    println("Server: Created bootstrap admin user 'admin' with default password 'admin'. Must change on first login.")
                 } else {
                     println("Server: Created bootstrap admin user 'admin' from ADMIN_PASSWORD.")
                 }

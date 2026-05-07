@@ -34,6 +34,10 @@ object AppSession {
         _refreshToken.value = refresh
     }
 
+    fun updateUser(user: User) {
+        _currentUser.value = user
+    }
+
     fun logout() {
         _currentUser.value = null
         _accessToken.value = null

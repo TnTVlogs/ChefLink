@@ -121,6 +121,33 @@ interface Strings {
     val modeClientDesc: String
     val startingServer: String
     val serverStartError: String
+    // Network card — client mode
+    val lanNetwork: String
+    val discoverLocal: String
+    val cloud: String
+    val cloudServerUrl: String
+    val connectToCloud: String
+    val discoverAutomatic: String
+    val apply: String
+    val connect: String
+    val change: String
+    // Server switch dialog
+    val serverFound: String
+    val serverFoundAt: String
+    val currentConnection: String
+    val confirmServerChange: String
+    val serverChange: String
+    val confirmConnectTo: String
+    // Force change password screen
+    val forceChangePasswordTitle: String
+    val forceChangePasswordDesc: String
+    val currentPassword: String
+    val newPasswordLabel: String
+    val confirmNewPassword: String
+    val enterCurrentPassword: String
+    val passwordTooShort: String
+    val passwordsDoNotMatch: String
+    val changePasswordAction: String
 }
 
 object CatalanStrings : Strings {
@@ -242,6 +269,30 @@ object CatalanStrings : Strings {
     override val modeClientDesc = "Connecta't a un servidor remot (núvol u altre ordinador)."
     override val startingServer = "Iniciant el servidor..."
     override val serverStartError = "Error en iniciar el servidor"
+    override val lanNetwork = "Xarxa local (LAN)"
+    override val discoverLocal = "Cerca servidor a la xarxa local"
+    override val cloud = "Núvol"
+    override val cloudServerUrl = "URL del servidor al núvol"
+    override val connectToCloud = "Connectar al núvol"
+    override val discoverAutomatic = "Cerca servidor automàticament"
+    override val apply = "Aplicar"
+    override val connect = "Connectar"
+    override val change = "Canviar"
+    override val serverFound = "Servidor trobat"
+    override val serverFoundAt = "S'ha trobat un servidor a la xarxa:"
+    override val currentConnection = "Connexió actual:"
+    override val confirmServerChange = "Vols canviar la connexió?"
+    override val serverChange = "Canvi de servidor"
+    override val confirmConnectTo = "Vols connectar a:"
+    override val forceChangePasswordTitle = "Canvi de contrasenya obligatori"
+    override val forceChangePasswordDesc = "Estàs usant la contrasenya per defecte. Cal canviar-la abans de continuar."
+    override val currentPassword = "Contrasenya actual"
+    override val newPasswordLabel = "Nova contrasenya"
+    override val confirmNewPassword = "Confirma la nova contrasenya"
+    override val enterCurrentPassword = "Introdueix la contrasenya actual."
+    override val passwordTooShort = "La nova contrasenya ha de tenir mínim 4 caràcters."
+    override val passwordsDoNotMatch = "Les contrasenyes no coincideixen."
+    override val changePasswordAction = "Canviar contrasenya"
 }
 
 object SpanishStrings : Strings {
@@ -363,6 +414,30 @@ object SpanishStrings : Strings {
     override val modeClientDesc = "Conéctate a un servidor remoto (nube u otro ordenador)."
     override val startingServer = "Iniciando el servidor..."
     override val serverStartError = "Error al iniciar el servidor"
+    override val lanNetwork = "Red local (LAN)"
+    override val discoverLocal = "Buscar servidor en red local"
+    override val cloud = "Nube"
+    override val cloudServerUrl = "URL del servidor en la nube"
+    override val connectToCloud = "Conectar a la nube"
+    override val discoverAutomatic = "Buscar servidor automáticamente"
+    override val apply = "Aplicar"
+    override val connect = "Conectar"
+    override val change = "Cambiar"
+    override val serverFound = "Servidor encontrado"
+    override val serverFoundAt = "Se ha encontrado un servidor en la red:"
+    override val currentConnection = "Conexión actual:"
+    override val confirmServerChange = "¿Quieres cambiar la conexión?"
+    override val serverChange = "Cambio de servidor"
+    override val confirmConnectTo = "¿Quieres conectar a:"
+    override val forceChangePasswordTitle = "Cambio de contraseña obligatorio"
+    override val forceChangePasswordDesc = "Estás usando la contraseña por defecto. Debes cambiarla antes de continuar."
+    override val currentPassword = "Contraseña actual"
+    override val newPasswordLabel = "Nueva contraseña"
+    override val confirmNewPassword = "Confirma la nueva contraseña"
+    override val enterCurrentPassword = "Introduce la contraseña actual."
+    override val passwordTooShort = "La nueva contraseña debe tener mínimo 4 caracteres."
+    override val passwordsDoNotMatch = "Las contraseñas no coinciden."
+    override val changePasswordAction = "Cambiar contraseña"
 }
 
 object EnglishStrings : Strings {
@@ -484,6 +559,30 @@ object EnglishStrings : Strings {
     override val modeClientDesc = "Connect to a remote server (cloud or another computer)."
     override val startingServer = "Starting server..."
     override val serverStartError = "Error starting server"
+    override val lanNetwork = "Local Network (LAN)"
+    override val discoverLocal = "Find server on local network"
+    override val cloud = "Cloud"
+    override val cloudServerUrl = "Cloud server URL"
+    override val connectToCloud = "Connect to cloud"
+    override val discoverAutomatic = "Auto-discover server"
+    override val apply = "Apply"
+    override val connect = "Connect"
+    override val change = "Change"
+    override val serverFound = "Server found"
+    override val serverFoundAt = "A server was found on the network:"
+    override val currentConnection = "Current connection:"
+    override val confirmServerChange = "Do you want to change the connection?"
+    override val serverChange = "Server change"
+    override val confirmConnectTo = "Do you want to connect to:"
+    override val forceChangePasswordTitle = "Password change required"
+    override val forceChangePasswordDesc = "You are using the default password. You must change it before continuing."
+    override val currentPassword = "Current password"
+    override val newPasswordLabel = "New password"
+    override val confirmNewPassword = "Confirm new password"
+    override val enterCurrentPassword = "Enter the current password."
+    override val passwordTooShort = "The new password must be at least 4 characters."
+    override val passwordsDoNotMatch = "Passwords do not match."
+    override val changePasswordAction = "Change password"
 }
 
 object FrenchStrings : Strings {
@@ -605,6 +704,30 @@ object FrenchStrings : Strings {
     override val modeClientDesc = "Connectez-vous à un serveur distant (cloud ou autre ordinateur)."
     override val startingServer = "Démarrage du serveur..."
     override val serverStartError = "Erreur lors du démarrage du serveur"
+    override val lanNetwork = "Réseau local (LAN)"
+    override val discoverLocal = "Rechercher serveur sur le réseau local"
+    override val cloud = "Nuage"
+    override val cloudServerUrl = "URL du serveur cloud"
+    override val connectToCloud = "Se connecter au cloud"
+    override val discoverAutomatic = "Découverte automatique du serveur"
+    override val apply = "Appliquer"
+    override val connect = "Se connecter"
+    override val change = "Changer"
+    override val serverFound = "Serveur trouvé"
+    override val serverFoundAt = "Un serveur a été trouvé sur le réseau :"
+    override val currentConnection = "Connexion actuelle :"
+    override val confirmServerChange = "Voulez-vous changer la connexion ?"
+    override val serverChange = "Changement de serveur"
+    override val confirmConnectTo = "Voulez-vous vous connecter à :"
+    override val forceChangePasswordTitle = "Changement de mot de passe obligatoire"
+    override val forceChangePasswordDesc = "Vous utilisez le mot de passe par défaut. Vous devez le changer avant de continuer."
+    override val currentPassword = "Mot de passe actuel"
+    override val newPasswordLabel = "Nouveau mot de passe"
+    override val confirmNewPassword = "Confirmer le nouveau mot de passe"
+    override val enterCurrentPassword = "Entrez le mot de passe actuel."
+    override val passwordTooShort = "Le nouveau mot de passe doit comporter au moins 4 caractères."
+    override val passwordsDoNotMatch = "Les mots de passe ne correspondent pas."
+    override val changePasswordAction = "Changer le mot de passe"
 }
 
 val LocalChefLinkStrings = staticCompositionLocalOf<Strings> { CatalanStrings }

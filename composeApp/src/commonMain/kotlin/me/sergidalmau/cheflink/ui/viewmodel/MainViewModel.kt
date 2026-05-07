@@ -52,6 +52,9 @@ class MainViewModel(
     private val _isServerEnabled = MutableStateFlow(settingsRepository.isServerEnabled)
     val isServerEnabled = _isServerEnabled.asStateFlow()
 
+    private val _isRunningAsHost = MutableStateFlow(false)
+    val isRunningAsHost = _isRunningAsHost.asStateFlow()
+
     private var updateObservationJob: Job? = null
     val user = AppSession.currentUser
 
@@ -262,6 +265,10 @@ class MainViewModel(
                 val success = userRepository.changePassword(currentUser.id, oldPass, newPass)
                 if (success) {
                     _registrationMessage.value = "Contrasenya canviada correctament."
+                    if (currentUser.mustChangePassword) {
+                        AppSession.updateUser(currentUser.copy(mustChangePassword = false))
+                        settingsRepository.persistedUser = AppSession.currentUser.value
+                    }
                 } else {
                     _registrationMessage.value = "Error: La contrasenya antiga no és correcta."
                 }
@@ -316,38 +323,90 @@ class MainViewModel(
     private val _isDiscovering = MutableStateFlow(false)
     val isDiscovering = _isDiscovering.asStateFlow()
 
+    private val _pendingServerUrl = MutableStateFlow<String?>(null)
+    val pendingServerUrl = _pendingServerUrl.asStateFlow()
+
     fun discoverServer() {
         viewModelScope.launch {
             _isDiscovering.value = true
             _registrationMessage.value = "Provant connexió al núvol..."
 
-            val oldUrl = _serverUrl.value
-
             val cloudUrl = "https://cheflink.sergidalmau.dev"
-            setServerUrl(cloudUrl)
+            var foundUrl: String? = null
 
-            var isCloudHealthy = false
-            try {
-                isCloudHealthy = orderRepository.checkHealth()
-            } catch (_: Exception) {
-            }
+            val isCloudHealthy = try {
+                RemoteOrderRepository(cloudUrl).checkHealth()
+            } catch (_: Exception) { false }
 
             if (isCloudHealthy) {
-                _isApiHealthy.value = true
-                _healthErrorMessage.value = null
-                _registrationMessage.value = "Connectat al núvol satisfactòriament!"
+                foundUrl = cloudUrl
+                _registrationMessage.value = "Servidor al núvol disponible."
             } else {
-                setServerUrl(oldUrl)
                 _registrationMessage.value = "Buscant servidor a la xarxa local..."
-                val discoveredUrl = DiscoveryClient().discover()
-                if (discoveredUrl != null) {
-                    setServerUrl(discoveredUrl)
-                    _isApiHealthy.value = true
-                    _healthErrorMessage.value = null
-                    _registrationMessage.value = "Servidor local trobat i connectat!"
+                val localUrl = DiscoveryClient().discover()
+                if (localUrl != null) {
+                    foundUrl = localUrl
+                    _registrationMessage.value = "Servidor local trobat."
                 } else {
                     _registrationMessage.value = "No s'ha trobat cap servidor al núvol ni a la xarxa local."
                 }
+            }
+
+            if (foundUrl != null) {
+                if (foundUrl == _serverUrl.value) {
+                    checkApiHealth()
+                    _registrationMessage.value = "Ja connectat a aquest servidor."
+                } else {
+                    _pendingServerUrl.value = foundUrl
+                }
+            }
+            _isDiscovering.value = false
+        }
+    }
+
+    fun confirmServerSwitch() {
+        val url = _pendingServerUrl.value ?: return
+        _pendingServerUrl.value = null
+        setServerUrl(url)
+    }
+
+    fun cancelServerSwitch() {
+        _pendingServerUrl.value = null
+        _registrationMessage.value = null
+    }
+
+    fun discoverLocalServer() {
+        viewModelScope.launch {
+            _isDiscovering.value = true
+            _registrationMessage.value = "Buscant servidor a la xarxa local..."
+            val localUrl = DiscoveryClient().discover()
+            if (localUrl != null) {
+                if (localUrl == _serverUrl.value) {
+                    checkApiHealth()
+                    _registrationMessage.value = "Ja connectat a aquest servidor."
+                } else {
+                    _pendingServerUrl.value = localUrl
+                    _registrationMessage.value = "Servidor local trobat."
+                }
+            } else {
+                _registrationMessage.value = "No s'ha trobat cap servidor a la xarxa local."
+            }
+            _isDiscovering.value = false
+        }
+    }
+
+    fun connectToCloudUrl(url: String) {
+        viewModelScope.launch {
+            _isDiscovering.value = true
+            _registrationMessage.value = "Connectant al núvol..."
+            val isHealthy = try {
+                RemoteOrderRepository(url.trim()).checkHealth()
+            } catch (_: Exception) { false }
+            if (isHealthy) {
+                setServerUrl(url.trim())
+                _registrationMessage.value = "Connectat al núvol satisfactòriament!"
+            } else {
+                _registrationMessage.value = "No s'ha pogut connectar a ${url.trim()}"
             }
             _isDiscovering.value = false
         }
@@ -387,6 +446,9 @@ class MainViewModel(
     }
 
     fun selectClientMode() {
+        _isRunningAsHost.value = false
+        _isServerEnabled.value = false
+        settingsRepository.isServerEnabled = false
         _isModeSelected.value = true
         checkApiHealth()
         if (AppSession.accessToken.value != null) {
@@ -399,17 +461,25 @@ class MainViewModel(
         viewModelScope.launch {
             _isServerStarting.value = true
             _serverStartError.value = null
+            try {
+                val result =
+                    serverManager?.startServer() ?: Result.failure(Exception("Server not supported on this platform"))
 
-            val result =
-                serverManager?.startServer() ?: Result.failure(Exception("Server not supported on this platform"))
-
-            if (result.isSuccess) {
-                setServerUrl("http://localhost:8080")
-                _isModeSelected.value = true
-            } else {
-                _serverStartError.value = result.exceptionOrNull()?.message ?: "Unknown error"
+                if (result.isSuccess) {
+                    _isRunningAsHost.value = true
+                    _isServerEnabled.value = true
+                    settingsRepository.isServerEnabled = true
+                    setServerUrl("http://localhost:8080")
+                    checkApiHealth()
+                    _isModeSelected.value = true
+                } else {
+                    _serverStartError.value = result.exceptionOrNull()?.message ?: "Unknown error"
+                }
+            } catch (e: Throwable) {
+                _serverStartError.value = "${e::class.simpleName}: ${e.message}"
+            } finally {
+                _isServerStarting.value = false
             }
-            _isServerStarting.value = false
         }
     }
 

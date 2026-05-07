@@ -30,7 +30,8 @@ class UserRepositoryImpl : UserRepository {
                 firstName = row[UsersTable.firstName],
                 lastName = row[UsersTable.lastName],
                 email = row[UsersTable.email],
-                role = UserRole.valueOf(row[UsersTable.role])
+                role = UserRole.valueOf(row[UsersTable.role]),
+                mustChangePassword = row[UsersTable.mustChangePassword]
             )
         } else {
             null
@@ -48,7 +49,8 @@ class UserRepositoryImpl : UserRepository {
                     firstName = row[UsersTable.firstName],
                     lastName = row[UsersTable.lastName],
                     email = row[UsersTable.email],
-                    role = UserRole.valueOf(row[UsersTable.role])
+                    role = UserRole.valueOf(row[UsersTable.role]),
+                    mustChangePassword = row[UsersTable.mustChangePassword]
                 )
             }
     }
@@ -92,6 +94,7 @@ class UserRepositoryImpl : UserRepository {
                 val newHash = BCrypt.hashpw(newPassword, BCrypt.gensalt())
                 UsersTable.update({ UsersTable.id eq userId }) {
                     it[passwordHash] = newHash
+                    it[mustChangePassword] = false
                 }
                 true
             } else {

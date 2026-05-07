@@ -78,8 +78,9 @@ object ChefLinkServer {
             
             println("Servidor ChefLink integrat i corrent!")
             true
-        } catch (e: Exception) {
-            println("Error en iniciar el servidor: ${e.message}")
+        } catch (e: Throwable) {
+            println("Error en iniciar el servidor: ${e::class.simpleName}: ${e.message}")
+            e.printStackTrace()
             engine = null
             false
         }

@@ -5,8 +5,17 @@ import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import me.sergidalmau.cheflink.server.ChefLinkServer
 import kotlin.system.exitProcess
+import java.io.File
+import java.io.PrintStream
 
 fun main() {
+    val logDir = File(System.getProperty("user.home"), "ChefLink")
+    logDir.mkdirs()
+    val logFile = File(logDir, "cheflink.log")
+    val logStream = PrintStream(logFile.outputStream(), true)
+    System.setOut(logStream)
+    System.setErr(logStream)
+
     application {
         Window(
             onCloseRequest = ::exitApplication,

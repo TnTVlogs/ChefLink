@@ -118,6 +118,7 @@ compose.desktop {
     application {
         mainClass = "me.sergidalmau.cheflink.MainKt"
         nativeDistributions {
+            modules("java.sql", "java.naming", "java.management", "java.security.jgss", "java.logging")
             targetFormats(TargetFormat.Msi, TargetFormat.Exe)
             packageName = "ChefLink"
             packageVersion = "1.0.0"

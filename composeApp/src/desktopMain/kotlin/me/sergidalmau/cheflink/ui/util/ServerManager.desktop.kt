@@ -1,10 +1,12 @@
 package me.sergidalmau.cheflink.ui.util
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import me.sergidalmau.cheflink.server.ChefLinkServer
 
 class DesktopServerManager : ServerManager {
-    override suspend fun startServer(): Result<Unit> {
-        return if (ChefLinkServer.start()) {
+    override suspend fun startServer(): Result<Unit> = withContext(Dispatchers.IO) {
+        if (ChefLinkServer.start()) {
             Result.success(Unit)
         } else {
             Result.failure(Exception("No s'ha pogut iniciar el servidor. Revisa si el port 8080 ja està en ús."))

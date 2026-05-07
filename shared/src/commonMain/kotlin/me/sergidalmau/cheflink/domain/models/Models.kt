@@ -72,7 +72,8 @@ data class User(
     val email: String,
     val firstName: String,
     val lastName: String,
-    val role: UserRole
+    val role: UserRole,
+    val mustChangePassword: Boolean = false
 )
 
 @Serializable
