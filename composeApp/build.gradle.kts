@@ -15,9 +15,9 @@ kotlin {
             jvmTarget.set(JvmTarget.JVM_11)
         }
     }
-    
+
     jvm("desktop")
-    
+
     sourceSets {
         androidMain.dependencies {
             implementation(libs.androidx.activity.compose)
@@ -43,8 +43,8 @@ kotlin {
             // --- VIEWMODEL I LIFECYCLE ---
             implementation(libs.androidx.lifecycle.viewmodelCompose)
             implementation(libs.androidx.lifecycle.runtimeCompose)
-            
-            implementation(libs.kotlinx.datetime) 
+
+            implementation(libs.kotlinx.datetime)
             implementation(libs.compose.materialIconsExtended)
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.multiplatform.settings)
@@ -103,11 +103,27 @@ dependencies {
 compose.desktop {
     application {
         mainClass = "me.sergidalmau.cheflink.MainKt"
-
         nativeDistributions {
-            targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Exe, TargetFormat.Deb)
-            packageName = "me.sergidalmau.cheflink"
+            targetFormats(TargetFormat.Msi, TargetFormat.Exe)
+            packageName = "ChefLink"
             packageVersion = "1.0.0"
+            description = "Sistema de gestió per a restauració"
+            copyright = "© 2026 Sergi Dalmau"
+            vendor = "Sergi Dalmau"
+            macOS {
+                iconFile.set(project.file("src/desktopMain/resources/icon.icns"))
+            }
+            windows {
+                iconFile.set(project.file("src/desktopMain/resources/icon.ico"))
+                menuGroup = "ChefLink"
+                perUserInstall = true
+                shortcut = true
+                upgradeUuid = "7B8B1308-BBED-44FC-931B-ACC62196C364"
+                dirChooser = true
+            }
+            linux {
+                iconFile.set(project.file("src/desktopMain/resources/icon.png"))
+            }
         }
     }
 }
