@@ -72,15 +72,9 @@ fun SettingsScreen(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Column(
-            modifier = Modifier.widthIn(max = 600.dp).fillMaxWidth(),
+            modifier = Modifier.widthIn(max = 600.dp).fillMaxWidth().padding(top = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(
-                strings.settings,
-                style = MaterialTheme.typography.headlineMedium,
-                modifier = Modifier.padding(top = 16.dp, bottom = 24.dp)
-            )
-
             if (user != null) {
                 UserProfileCard(
                     user = user,
