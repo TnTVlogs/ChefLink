@@ -34,7 +34,7 @@ object ApiClient {
         }
         install(Logging) {
             logger = Logger.DEFAULT
-            level = LogLevel.INFO
+            level = LogLevel.ALL
         }
         install(Auth) {
             bearer {
@@ -89,8 +89,8 @@ object ApiClient {
         }
         install(HttpTimeout) {
             requestTimeoutMillis = 15000
-            connectTimeoutMillis = 15000
-            socketTimeoutMillis = 15000
+            connectTimeoutMillis = 5000
+            socketTimeoutMillis = 5000
         }
         install(WebSockets) {
             pingIntervalMillis = 20_000 // 20 seconds

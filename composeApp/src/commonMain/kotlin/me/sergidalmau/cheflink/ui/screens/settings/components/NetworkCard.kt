@@ -54,7 +54,6 @@ fun NetworkCard(
     val strings = LocalChefLinkStrings.current
 
     val currentServerUrl by viewModel.serverUrl.collectAsState()
-    val pendingServerUrl by viewModel.pendingServerUrl.collectAsState()
 
     val platformName = remember { getPlatform().name }
     val isDesktop = !platformName.contains("Android", ignoreCase = true)
@@ -65,42 +64,6 @@ fun NetworkCard(
     var cloudUrl by remember { mutableStateOf(DEFAULT_CLOUD_URL) }
     var manualUrl by remember(currentServerUrl) { mutableStateOf(currentServerUrl) }
     var showManualConfirmDialog by remember { mutableStateOf(false) }
-
-    // Dialog: local discovery trobat URL diferent
-    if (pendingServerUrl != null) {
-        AlertDialog(
-            onDismissRequest = { viewModel.cancelServerSwitch() },
-            title = { Text(strings.serverFound) },
-            text = {
-                Column {
-                    Text(strings.serverFoundAt)
-                    Spacer(Modifier.height(8.dp))
-                    Text(
-                        pendingServerUrl!!,
-                        style = typography.bodyMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = colorScheme.primary
-                    )
-                    if (currentServerUrl.isNotBlank()) {
-                        Spacer(Modifier.height(6.dp))
-                        Text(
-                            "${strings.currentConnection} $currentServerUrl",
-                            style = typography.bodySmall,
-                            color = colorScheme.onSurfaceVariant
-                        )
-                    }
-                    Spacer(Modifier.height(8.dp))
-                    Text(strings.confirmServerChange)
-                }
-            },
-            confirmButton = {
-                Button(onClick = { viewModel.confirmServerSwitch() }) { Text(strings.change) }
-            },
-            dismissButton = {
-                TextButton(onClick = { viewModel.cancelServerSwitch() }) { Text(strings.cancel) }
-            }
-        )
-    }
 
     // Dialog: canvi manual URL (mode host)
     if (showManualConfirmDialog) {

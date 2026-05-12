@@ -23,6 +23,7 @@ import me.sergidalmau.cheflink.domain.models.ProductCategory
 import me.sergidalmau.cheflink.domain.models.UserRole
 import me.sergidalmau.cheflink.domain.repository.ProductRepository
 import me.sergidalmau.cheflink.getPlatform
+import me.sergidalmau.cheflink.data.remote.isLocalUrl
 import me.sergidalmau.cheflink.ui.util.AppSession
 import me.sergidalmau.cheflink.ui.util.ComponentSize
 import me.sergidalmau.cheflink.ui.util.Language
@@ -93,6 +94,12 @@ class MainViewModel(
 
     private val serverManager = getPlatformServerManager()
 
+    private val _isDiscovering = MutableStateFlow(false)
+    val isDiscovering = _isDiscovering.asStateFlow()
+
+    private val _pendingServerUrl = MutableStateFlow<String?>(null)
+    val pendingServerUrl = _pendingServerUrl.asStateFlow()
+
     init {
         val acc = settingsRepository.accessToken
         val ref = settingsRepository.refreshToken
@@ -103,10 +110,16 @@ class MainViewModel(
         }
 
         if (_isModeSelected.value) {
-            checkApiHealth()
-            if (AppSession.accessToken.value != null) {
-                loadTables()
-                loadProducts()
+            val savedUrl = settingsRepository.serverUrl
+            if (savedUrl.isBlank()) {
+                _isApiHealthy.value = false
+                discoverLocalServer()
+            } else {
+                checkApiHealth()
+                if (AppSession.accessToken.value != null) {
+                    loadTables()
+                    loadProducts()
+                }
             }
         }
     }
@@ -163,7 +176,7 @@ class MainViewModel(
         }
     }
 
-    fun checkApiHealth(retryCount: Int = 3) {
+    fun checkApiHealth(retryCount: Int = 2) {
         viewModelScope.launch {
             _isCheckingHealth.value = true
             _healthErrorMessage.value = null
@@ -190,6 +203,9 @@ class MainViewModel(
                 loadProducts()
             } else {
                 _healthErrorMessage.value = lastError ?: "No s'ha obtingut resposta del servidor"
+                if (isLocalUrl(_serverUrl.value)) {
+                    discoverLocalServer()
+                }
             }
         }
     }
@@ -308,23 +324,23 @@ class MainViewModel(
         settingsRepository.serverUrl = url
         _serverUrl.value = url
 
+        AppSession.logout()
+        settingsRepository.accessToken = null
+        settingsRepository.refreshToken = null
+        settingsRepository.persistedUser = null
+        _loginError.value = null
+        _tables.value = emptyList()
+        _products.value = emptyList()
+        updateObservationJob?.cancel()
+        updateObservationJob = null
+
         tableRepository = RemoteTableRepository(url)
         userRepository = RemoteUserRepository(url, settingsRepository)
         orderRepository = RemoteOrderRepository(url)
         productRepository = RemoteProductRepository(url)
 
         checkApiHealth()
-        if (AppSession.accessToken.value != null) {
-            loadTables()
-            loadProducts()
-        }
     }
-
-    private val _isDiscovering = MutableStateFlow(false)
-    val isDiscovering = _isDiscovering.asStateFlow()
-
-    private val _pendingServerUrl = MutableStateFlow<String?>(null)
-    val pendingServerUrl = _pendingServerUrl.asStateFlow()
 
     fun discoverServer() {
         viewModelScope.launch {

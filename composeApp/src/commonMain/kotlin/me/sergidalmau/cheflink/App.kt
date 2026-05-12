@@ -1,6 +1,8 @@
 package me.sergidalmau.cheflink
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -14,6 +16,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.TextButton
 import androidx.compose.material.icons.Icons
@@ -100,6 +103,12 @@ fun App() {
             var selectedTable by remember { mutableStateOf<Int?>(null) }
             var editingOrderId by remember { mutableStateOf<String?>(null) }
 
+            LaunchedEffect(serverUrl) {
+                currentScreen = Screen.Tables
+                selectedTable = null
+                editingOrderId = null
+            }
+
             val orders by orderViewModel.orders.collectAsState()
             val isApiHealthy by mainViewModel.isApiHealthy.collectAsState()
             val isCheckingHealth by mainViewModel.isCheckingHealth.collectAsState()
@@ -111,6 +120,49 @@ fun App() {
             val isModeSelected by mainViewModel.isModeSelected.collectAsState()
             val isServerStarting by mainViewModel.isServerStarting.collectAsState()
             val serverStartError by mainViewModel.serverStartError.collectAsState()
+            val isConnected by orderViewModel.isConnected.collectAsState()
+
+            LaunchedEffect(isConnected) {
+                if (isConnected && isApiHealthy != true) {
+                    mainViewModel.checkApiHealth(1)
+                }
+            }
+
+            val pendingServerUrl by mainViewModel.pendingServerUrl.collectAsState()
+            if (pendingServerUrl != null) {
+                AlertDialog(
+                    onDismissRequest = { mainViewModel.cancelServerSwitch() },
+                    title = { Text(strings.serverFound) },
+                    text = {
+                        Column {
+                            Text(strings.serverFoundAt)
+                            Spacer(Modifier.height(8.dp))
+                            Text(
+                                pendingServerUrl!!,
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            if (serverUrl.isNotBlank()) {
+                                Spacer(Modifier.height(6.dp))
+                                Text(
+                                    "${strings.currentConnection} $serverUrl",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                            Spacer(Modifier.height(8.dp))
+                            Text(strings.confirmServerChange)
+                        }
+                    },
+                    confirmButton = {
+                        Button(onClick = { mainViewModel.confirmServerSwitch() }) { Text(strings.change) }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { mainViewModel.cancelServerSwitch() }) { Text(strings.cancel) }
+                    }
+                )
+            }
 
             if (!isModeSelected) {
                 ModeSelectionScreen(
@@ -123,7 +175,10 @@ fun App() {
             } else if (currentScreen == Screen.Settings) {
                 // Es renderitzarà dins del Scaffold a sota
             } else if (isApiHealthy != true) {
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Box(
+                    modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()),
+                    contentAlignment = Alignment.Center
+                ) {
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier.padding(32.dp)
@@ -175,33 +230,32 @@ fun App() {
                                     Text(strings.discovering)
                                 }
                             } else {
-                                Row(
-                                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                                    modifier = Modifier.fillMaxWidth(),
-                                    verticalAlignment = Alignment.CenterVertically
+                                Column(
+                                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                                    modifier = Modifier.fillMaxWidth()
                                 ) {
                                     Button(
                                         onClick = { mainViewModel.checkApiHealth() },
                                         enabled = !isCheckingHealth,
-                                        modifier = Modifier.weight(1f)
+                                        modifier = Modifier.fillMaxWidth()
                                     ) {
                                         Text(strings.retry)
                                     }
 
                                     Button(
-                                        onClick = { mainViewModel.discoverServer() },
+                                        onClick = { mainViewModel.discoverLocalServer() },
                                         colors = ButtonDefaults.buttonColors(
                                             containerColor = MaterialTheme.colorScheme.secondaryContainer,
                                             contentColor = MaterialTheme.colorScheme.onSecondaryContainer
                                         ),
-                                        modifier = Modifier.weight(1.2f)
+                                        modifier = Modifier.fillMaxWidth()
                                     ) {
                                         Text(strings.autoDiscover)
                                     }
 
                                     OutlinedButton(
                                         onClick = { currentScreen = Screen.Settings },
-                                        modifier = Modifier.weight(1f)
+                                        modifier = Modifier.fillMaxWidth()
                                     ) {
                                         Icon(
                                             imageVector = Icons.Default.Settings,
@@ -331,8 +385,6 @@ fun App() {
                     }
                 ) { paddingValues ->
                     Box(modifier = Modifier.padding(paddingValues).consumeWindowInsets(paddingValues)) {
-                        val isConnected by orderViewModel.isConnected.collectAsState()
-
                         Column {
                             if (!isConnected) {
                                 Modifier.background(

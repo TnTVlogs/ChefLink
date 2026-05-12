@@ -38,7 +38,8 @@ class RemoteUserRepository(
             // Update memory
             AppSession.loginUser(response.user, response.accessToken, response.refreshToken)
             response.user
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            println("Login error [${e::class.simpleName}]: ${e.message}")
             null
         }
     }
